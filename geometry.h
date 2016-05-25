@@ -6,6 +6,7 @@
 const int MINIMAL_WIDTH = 50;
 const int BORDER = 3;
 const int CORNER = 10;
+const int SNAP = 10;
 
 enum class Horizontal
 {

@@ -187,14 +187,14 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			b = pe->globalY() - mousePressedY;
 		}
 
-		if (abs(a - qApp->desktop()->availableGeometry(this).x()) < 10)
+		if (abs(a - qApp->desktop()->availableGeometry(this).x()) < SNAP)
 		{
 			if (position.left())
 				resize(a - qApp->desktop()->availableGeometry(this).x() + width(), d);
 			    //c = a - qApp->desktop()->availableGeometry().x() + width();
 			a = qApp->desktop()->availableGeometry(this).x();
 		}
-		else if (abs(qApp->desktop()->availableGeometry(this).right() - (a + width())) < 10)
+		else if (abs(qApp->desktop()->availableGeometry(this).right() - (a + width())) < SNAP)
 		{
 			if (position.right())
 				resize(qApp->desktop()->availableGeometry(this).right() - a, d);
@@ -202,14 +202,14 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			//else
 			    a = qApp->desktop()->availableGeometry(this).right() - width();
 		}
-		if (abs(b - qApp->desktop()->availableGeometry(this).y()) < 10)
+		if (abs(b - qApp->desktop()->availableGeometry(this).y()) < SNAP)
 		{
 			if (position.top())
 				resize(c, b - qApp->desktop()->availableGeometry(this).y() + height());
 			    //d = b - qApp->desktop()->availableGeometry().y() + height();
 			b = qApp->desktop()->availableGeometry(this).y();
 		}
-		else if (abs(qApp->desktop()->availableGeometry(this).bottom() - (b + height())) < 10)
+		else if (abs(qApp->desktop()->availableGeometry(this).bottom() - (b + height())) < SNAP)
 		{
 			if (position.bottom())
 				resize(c, qApp->desktop()->availableGeometry(this).bottom() - b);
@@ -233,17 +233,17 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 				anotherX2 = note->x() + note->width();
 				anotherY2 = note->y() + note->height();
 
-				if ((x() < anotherX2 + 10)&&(x() > anotherX1 - width() - 10)) //область сравнения по горизонтали
+				if ((x() < anotherX2 + SNAP)&&(x() > anotherX1 - width() - SNAP)) //область сравнения по горизонтали
 				{
 					//это у нас одинаковые стороны сближаются
 
-					if (abs(anotherY2 - (b + height())) < 10)//это нижняя сторона
+					if (abs(anotherY2 - (b + height())) < SNAP)//это нижняя сторона
 					{
 						if (position.bottom())
 							resize(c, anotherY2 - b);
 						b = anotherY2 - height();
 					}
-					if (abs(b - anotherY1) < 10)//а это верхняя
+					if (abs(b - anotherY1) < SNAP)//а это верхняя
 					{
 						if (position.top())
 							resize(c, b - anotherY1 + height());
@@ -252,13 +252,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					//а тут типа противоположные
 
-					if (abs(b - anotherY2) < 10)//верх
+					if (abs(b - anotherY2) < SNAP)//верх
 					{
 						if (position.top())
 							resize(c, b - anotherY2 + height());
 						b = anotherY2;
 					}
-					if (abs(anotherY1 - (b + height())) < 10)//низ
+					if (abs(anotherY1 - (b + height())) < SNAP)//низ
 					{
 						if (position.bottom())
 							resize(c, anotherY1 - b);
@@ -266,17 +266,17 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 					}
 				}
 
-				if ((y() < anotherY2 + 10)&&(y() > anotherY1 - height() - 10)) //область сравнения по вертикали
+				if ((y() < anotherY2 + SNAP)&&(y() > anotherY1 - height() - SNAP)) //область сравнения по вертикали
 				{
 					//одинаковые
 
-					if (abs(anotherX2 - (a + width())) < 10)//правая сторона
+					if (abs(anotherX2 - (a + width())) < SNAP)//правая сторона
 					{
 						if (position.right())
 							resize(anotherX2 - a, d);
 						a = anotherX2 - width();
 					}
-					if (abs(a - anotherX1) < 10)//левая
+					if (abs(a - anotherX1) < SNAP)//левая
 					{
 						if (position.left())
 							resize(a - anotherX1 + width(), d);
@@ -285,13 +285,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					//противоположные
 
-					if (abs(a - anotherX2) < 10)//левая
+					if (abs(a - anotherX2) < SNAP)//левая
 					{
 						if (position.left())
 							resize(a - anotherX2 + width(), d);
 						a = anotherX2;
 					}
-					if (abs(anotherX1 - (a + width())) < 10)//правая
+					if (abs(anotherX1 - (a + width())) < SNAP)//правая
 					{
 						if (position.right())
 							resize(anotherX1 - a, d);
