@@ -27,17 +27,15 @@
 
 QVector<Notes*> allMyNotes;
 
-const int MINIMAL_WIDTH = 50;
-
 void resetNoteInstances();
 
 Notes::Notes() : QWidget(0),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
-	isPressed(FALSE), moveTop(FALSE), moveBottom(FALSE), moveRight(FALSE), moveLeft(FALSE),
+    isPressed(false),
     color1(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
     color2(color1.darker(130)),
-	onTop(FALSE)
+    onTop(false)
 {
 	init();
 	setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
@@ -47,7 +45,7 @@ Notes::Notes() : QWidget(0),
 Notes::Notes(QColor inColor1, QColor inColor2, QPoint inPlace, QSize inSize, QString inText, bool inTop) : QWidget(0),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
-	isPressed(FALSE), moveTop(FALSE), moveBottom(FALSE), moveRight(FALSE), moveLeft(FALSE),
+    isPressed(false),
 	color1(inColor1), color2(inColor2),
 	txtl(inText),
 	onTop(inTop)
@@ -79,15 +77,15 @@ void Notes::init()
 	connect(&cmdClose, SIGNAL(clicked()), SLOT(slotCloseForm()));
 
 	cmdNew.setFixedSize (24, 24);
-	cmdNew.setFlat(TRUE);
+	cmdNew.setFlat(true);
 	cmdNew.setCursor(Qt::ArrowCursor);
 	cmdNew.setShortcut(Qt::CTRL + Qt::Key_N);
 	cmdTop.setFixedSize (24, 24);
-	cmdTop.setFlat(TRUE);
+	cmdTop.setFlat(true);
 	cmdTop.setCursor(Qt::ArrowCursor);
 	cmdTop.setShortcut(Qt::CTRL + Qt::Key_T);
 	cmdClose.setFixedSize (24, 24);
-	cmdClose.setFlat(TRUE);
+	cmdClose.setFlat(true);
 	cmdClose.setCursor(Qt::ArrowCursor);
 	cmdClose.setShortcut(Qt::CTRL + Qt::Key_X);
 	txtl.setFrameShape(QFrame::NoFrame);
@@ -112,7 +110,7 @@ void Notes::init()
 	setTabOrder(&cmdTop, &cmdClose);
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	setMouseTracking(TRUE);
+	setMouseTracking(true);
 
 	//прозрачный фон области редактирования текста
 
@@ -131,108 +129,22 @@ void Notes::init()
 	setFont(font);
 }
 
-Qt::CursorShape Notes::chooseCursorShape(int x, int y, int width, int height)
-{
-	Qt::CursorShape shape;
-
-	if (y < 3)
-	{
-		if (x < 10)
-			shape = Qt::SizeFDiagCursor;
-		else if (x > width - 10)
-			shape = Qt::SizeBDiagCursor;
-		else
-			shape = Qt::SizeVerCursor;
-	}
-	else if (y > height - 3)
-	{
-		if (x < 10)
-			shape = Qt::SizeBDiagCursor;
-		else if (x > width - 10)
-			shape = Qt::SizeFDiagCursor;
-		else
-			shape = Qt::SizeVerCursor;
-	}
-	else
-	{
-		if (x < 3)
-		{
-			if (y < 10)
-				shape = Qt::SizeFDiagCursor;
-			else if (y > height - 10)
-				shape = Qt::SizeBDiagCursor;
-			else
-				shape = Qt::SizeHorCursor;
-		}
-		else if (x > width - 3)
-		{
-			if (y < 10)
-				shape = Qt::SizeBDiagCursor;
-			else if (y > height - 10)
-				shape = Qt::SizeFDiagCursor;
-			else
-				shape = Qt::SizeHorCursor;
-		}
-		else
-			shape = Qt::ArrowCursor;
-	}
-
-	return shape;
-}
-
 void Notes::mousePressEvent(QMouseEvent* pe)
 {
 	if(pe->button() == Qt::LeftButton)
-		isPressed = TRUE;
+		isPressed = true;
 
 	mousePressedX = pe->x();
 	mousePressedY = pe->y();
 
-	if (pe->y() < 3)
-	{
-		if (pe->x() < 10)
-			moveLeft = TRUE;
-		else if (pe->x() > width() - 10)
-			moveRight = TRUE;
-		moveTop = TRUE;
-	}
-	else if (pe->y() > height() - 3)
-	{
-		if (pe->x() < 10)
-			moveLeft = TRUE;
-		else if (pe->x() > width() - 10)
-			moveRight = TRUE;
-		moveBottom = TRUE;
-	}
-	else
-	{
-		if (pe->x() < 3)
-		{
-			if (pe->y() < 10)
-				moveTop = TRUE;
-			else if (pe->y() > height() - 10)
-				moveBottom = TRUE;
-			moveLeft = TRUE;
-		}
-		else if (pe->x() > width() - 3)
-		{
-			if (pe->y() < 10)
-				moveTop = TRUE;
-			else if (pe->y() > height() - 10)
-				moveBottom = TRUE;
-			moveRight = TRUE;
-		}
-	}
+	position = Position(pe->x(), pe->y(), width(), height());
 }
 
 void Notes::mouseReleaseEvent(QMouseEvent* pe)
 {
-	isPressed = FALSE;
+	isPressed = false;
 
-	moveTop = FALSE;
-	moveBottom = FALSE;
-	moveRight = FALSE;
-	moveLeft = FALSE;
+	position.clear();
 }
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
@@ -240,23 +152,23 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 	int a = x(), b = y(), c = width(), d = height();
 
 	if (!isPressed)
-		setCursor(chooseCursorShape(pe->x(), pe->y(), width(), height()));
+		setCursor(Position(pe->x(), pe->y(), width(), height()).toCursorShape());
 
 	if (isPressed)
 	{
-		if (moveLeft && (c > MINIMAL_WIDTH))
+		if (position.left() && (c > MINIMAL_WIDTH))
 		{
 			c = width() - pe->x();
 			a = pe->globalX();// - pressedX; //Оно работает нормально при значении Pressed равном нулю только почему-то
 		}
-		else if (moveRight)
+		else if (position.right())
 			c = pe->x();// + width() - pressedX; тут нужно старое значение ширины
-		if (moveTop && (d > MINIMAL_WIDTH))
+		if (position.top() && (d > MINIMAL_WIDTH))
 		{
 			d = height() - pe->y();
 			b = pe->globalY();// - pressedY;  //Оно работает нормально при значении Pressed равном нулю только почему-то
 		}
-		else if (moveBottom)
+		else if (position.bottom())
 			d = pe->y();// + height() - pressedY; тут нужно старое значение ширины
 
 		if (c < MINIMAL_WIDTH)
@@ -269,7 +181,7 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			b = y() + height() - MINIMAL_WIDTH;
 		resize (c, d);
 
-		if (!moveTop && !moveBottom && !moveLeft && !moveRight)
+		if (!position.top() && !position.bottom() && !position.left() && !position.right())
 		{
 			a = pe->globalX() - mousePressedX;
 			b = pe->globalY() - mousePressedY;
@@ -277,14 +189,14 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 		if (abs(a - qApp->desktop()->availableGeometry().x()) < 10)
 		{
-			if (moveLeft)
+			if (position.left())
 				resize(a - qApp->desktop()->availableGeometry().x() + width(), d);
 				//c = a - qApp->desktop()->availableGeometry().x() + width();
 			a = qApp->desktop()->availableGeometry().x();
 		}
 		else if (abs(qApp->desktop()->availableGeometry().right() - (a + width())) < 10)
 		{
-			if (moveRight)
+			if (position.right())
 				resize(qApp->desktop()->availableGeometry().right() - a, d);
 				//c = qApp->desktop()->availableGeometry().right() - a;
 			//else
@@ -292,14 +204,14 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 		}
 		if (abs(b - qApp->desktop()->availableGeometry().y()) < 10)
 		{
-			if (moveTop)
+			if (position.top())
 				resize(c, b - qApp->desktop()->availableGeometry().y() + height());
 				//d = b - qApp->desktop()->availableGeometry().y() + height();
 			b = qApp->desktop()->availableGeometry().y();
 		}
 		else if (abs(qApp->desktop()->availableGeometry().bottom() - (b + height())) < 10)
 		{
-			if (moveBottom)
+			if (position.bottom())
 				resize(c, qApp->desktop()->availableGeometry().bottom() - b);
 				//d = qApp->desktop()->availableGeometry().bottom() - b;
 			//else
@@ -327,13 +239,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					if (abs(anotherY2 - (b + height())) < 10)//это нижняя сторона
 					{
-						if (moveBottom)
+						if (position.bottom())
 							resize(c, anotherY2 - b);
 						b = anotherY2 - height();
 					}
 					if (abs(b - anotherY1) < 10)//а это верхняя
 					{
-						if (moveTop)
+						if (position.top())
 							resize(c, b - anotherY1 + height());
 						b = anotherY1;
 					}
@@ -342,13 +254,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					if (abs(b - anotherY2) < 10)//верх
 					{
-						if (moveTop)
+						if (position.top())
 							resize(c, b - anotherY2 + height());
 						b = anotherY2;
 					}
 					if (abs(anotherY1 - (b + height())) < 10)//низ
 					{
-						if (moveBottom)
+						if (position.bottom())
 							resize(c, anotherY1 - b);
 						b = anotherY1 - height();
 					}
@@ -360,13 +272,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					if (abs(anotherX2 - (a + width())) < 10)//правая сторона
 					{
-						if (moveRight)
+						if (position.right())
 							resize(anotherX2 - a, d);
 						a = anotherX2 - width();
 					}
 					if (abs(a - anotherX1) < 10)//левая
 					{
-						if (moveLeft)
+						if (position.left())
 							resize(a - anotherX1 + width(), d);
 						a = anotherX1;
 					}
@@ -375,13 +287,13 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 					if (abs(a - anotherX2) < 10)//левая
 					{
-						if (moveLeft)
+						if (position.left())
 							resize(a - anotherX2 + width(), d);
 						a = anotherX2;
 					}
 					if (abs(anotherX1 - (a + width())) < 10)//правая
 					{
-						if (moveRight)
+						if (position.right())
 							resize(anotherX1 - a, d);
 						a = anotherX1 - width();
 					}
@@ -435,13 +347,13 @@ void Notes::slotTopForm()
 	if (onTop)
 	{
 		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
-		onTop = FALSE;
+		onTop = false;
 		cmdTop.setText("^");
 	}
 	else
 	{
 		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
-		onTop = TRUE;
+		onTop = true;
 		cmdTop.setText("v");
 	}
 	resize(widthChangeTop, heightChangeTop);

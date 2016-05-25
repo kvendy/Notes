@@ -1,6 +1,7 @@
 #ifndef _notes_h_
 #define __notes_h_
 
+#include "geometry.h"
 #include <QSystemTrayIcon>
 #include <QDialog>
 #include <QPushButton>
@@ -25,9 +26,9 @@ private:
 	QPushButton cmdClose;
 	QMenu* pmnu;
 	int mousePressedX, mousePressedY;
-	bool isPressed, moveTop, moveBottom, moveRight, moveLeft;
+	bool isPressed;
+	Position position;
 	void init();
-	Qt::CursorShape chooseCursorShape(int x, int y, int width, int height);
 public:
 	Notes();
 	Notes(QColor, QColor, QPoint, QSize, QString, bool);
