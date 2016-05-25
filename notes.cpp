@@ -187,35 +187,35 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			b = pe->globalY() - mousePressedY;
 		}
 
-		if (abs(a - qApp->desktop()->availableGeometry().x()) < 10)
+		if (abs(a - qApp->desktop()->availableGeometry(this).x()) < 10)
 		{
 			if (position.left())
-				resize(a - qApp->desktop()->availableGeometry().x() + width(), d);
-				//c = a - qApp->desktop()->availableGeometry().x() + width();
-			a = qApp->desktop()->availableGeometry().x();
+				resize(a - qApp->desktop()->availableGeometry(this).x() + width(), d);
+			    //c = a - qApp->desktop()->availableGeometry().x() + width();
+			a = qApp->desktop()->availableGeometry(this).x();
 		}
-		else if (abs(qApp->desktop()->availableGeometry().right() - (a + width())) < 10)
+		else if (abs(qApp->desktop()->availableGeometry(this).right() - (a + width())) < 10)
 		{
 			if (position.right())
-				resize(qApp->desktop()->availableGeometry().right() - a, d);
-				//c = qApp->desktop()->availableGeometry().right() - a;
+				resize(qApp->desktop()->availableGeometry(this).right() - a, d);
+			    //c = qApp->desktop()->availableGeometry().right() - a;
 			//else
-				a = qApp->desktop()->availableGeometry().right() - width();
+			    a = qApp->desktop()->availableGeometry(this).right() - width();
 		}
-		if (abs(b - qApp->desktop()->availableGeometry().y()) < 10)
+		if (abs(b - qApp->desktop()->availableGeometry(this).y()) < 10)
 		{
 			if (position.top())
-				resize(c, b - qApp->desktop()->availableGeometry().y() + height());
-				//d = b - qApp->desktop()->availableGeometry().y() + height();
-			b = qApp->desktop()->availableGeometry().y();
+				resize(c, b - qApp->desktop()->availableGeometry(this).y() + height());
+			    //d = b - qApp->desktop()->availableGeometry().y() + height();
+			b = qApp->desktop()->availableGeometry(this).y();
 		}
-		else if (abs(qApp->desktop()->availableGeometry().bottom() - (b + height())) < 10)
+		else if (abs(qApp->desktop()->availableGeometry(this).bottom() - (b + height())) < 10)
 		{
 			if (position.bottom())
-				resize(c, qApp->desktop()->availableGeometry().bottom() - b);
-				//d = qApp->desktop()->availableGeometry().bottom() - b;
+				resize(c, qApp->desktop()->availableGeometry(this).bottom() - b);
+			    //d = qApp->desktop()->availableGeometry().bottom() - b;
 			//else
-				b = qApp->desktop()->availableGeometry().bottom() - height();
+			    b = qApp->desktop()->availableGeometry(this).bottom() - height();
 		}
 
 		//попробуем поприлипать к своим же окнам
