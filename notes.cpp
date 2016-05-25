@@ -27,6 +27,8 @@
 
 QVector<Notes*> allMyNotes;
 
+const int MINIMAL_WIDTH = 50;
+
 void resetNoteInstances();
 
 Notes::Notes() : QWidget(0),
@@ -129,6 +131,55 @@ void Notes::init()
 	setFont(font);
 }
 
+Qt::CursorShape Notes::chooseCursorShape(int x, int y, int width, int height)
+{
+	Qt::CursorShape shape;
+
+	if (y < 3)
+	{
+		if (x < 10)
+			shape = Qt::SizeFDiagCursor;
+		else if (x > width - 10)
+			shape = Qt::SizeBDiagCursor;
+		else
+			shape = Qt::SizeVerCursor;
+	}
+	else if (y > height - 3)
+	{
+		if (x < 10)
+			shape = Qt::SizeBDiagCursor;
+		else if (x > width - 10)
+			shape = Qt::SizeFDiagCursor;
+		else
+			shape = Qt::SizeVerCursor;
+	}
+	else
+	{
+		if (x < 3)
+		{
+			if (y < 10)
+				shape = Qt::SizeFDiagCursor;
+			else if (y > height - 10)
+				shape = Qt::SizeBDiagCursor;
+			else
+				shape = Qt::SizeHorCursor;
+		}
+		else if (x > width - 3)
+		{
+			if (y < 10)
+				shape = Qt::SizeBDiagCursor;
+			else if (y > height - 10)
+				shape = Qt::SizeFDiagCursor;
+			else
+				shape = Qt::SizeHorCursor;
+		}
+		else
+			shape = Qt::ArrowCursor;
+	}
+
+	return shape;
+}
+
 void Notes::mousePressEvent(QMouseEvent* pe)
 {
 	if(pe->button() == Qt::LeftButton)
@@ -189,60 +240,18 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 	int a = x(), b = y(), c = width(), d = height();
 
 	if (!isPressed)
-	{
-		if (pe->y() < 3)
-		{
-			if (pe->x() < 10)
-				setCursor(Qt::SizeFDiagCursor);
-			else if (pe->x() > width() - 10)
-				setCursor(Qt::SizeBDiagCursor);
-			else
-				setCursor(Qt::SizeVerCursor);
-		}
-		else if (pe->y() > height() - 3)
-		{
-			if (pe->x() < 10)
-				setCursor(Qt::SizeBDiagCursor);
-			else if (pe->x() > width() - 10)
-				setCursor(Qt::SizeFDiagCursor);
-			else
-				setCursor(Qt::SizeVerCursor);
-		}
-		else
-		{
-			if (pe->x() < 3)
-			{
-				if (pe->y() < 10)
-					setCursor(Qt::SizeFDiagCursor);
-				else if (pe->y() > height() - 10)
-					setCursor(Qt::SizeBDiagCursor);
-				else
-					setCursor(Qt::SizeHorCursor);
-			}
-			else if (pe->x() > width() - 3)
-			{
-				if (pe->y() < 10)
-					setCursor(Qt::SizeBDiagCursor);
-				else if (pe->y() > height() - 10)
-					setCursor(Qt::SizeFDiagCursor);
-				else
-					setCursor(Qt::SizeHorCursor);
-			}
-			else
-				setCursor(Qt::ArrowCursor);
-		}
-	}
+		setCursor(chooseCursorShape(pe->x(), pe->y(), width(), height()));
 
 	if (isPressed)
 	{
-		if (moveLeft && (c > 50))
+		if (moveLeft && (c > MINIMAL_WIDTH))
 		{
 			c = width() - pe->x();
 			a = pe->globalX();// - pressedX; //Оно работает нормально при значении Pressed равном нулю только почему-то
 		}
 		else if (moveRight)
 			c = pe->x();// + width() - pressedX; тут нужно старое значение ширины
-		if (moveTop && (d > 50))
+		if (moveTop && (d > MINIMAL_WIDTH))
 		{
 			d = height() - pe->y();
 			b = pe->globalY();// - pressedY;  //Оно работает нормально при значении Pressed равном нулю только почему-то
@@ -250,14 +259,14 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 		else if (moveBottom)
 			d = pe->y();// + height() - pressedY; тут нужно старое значение ширины
 
-		if (c < 50)
-			c = 50;
-		if (d < 50)
-			d = 50;
-		if (a > x() + width() - 50)
-			a = x() + width() - 50;
-		if (b > y() + height() - 50)
-			b = y() + height() - 50;
+		if (c < MINIMAL_WIDTH)
+			c = MINIMAL_WIDTH;
+		if (d < MINIMAL_WIDTH)
+			d = MINIMAL_WIDTH;
+		if (a > x() + width() - MINIMAL_WIDTH)
+			a = x() + width() - MINIMAL_WIDTH;
+		if (b > y() + height() - MINIMAL_WIDTH)
+			b = y() + height() - MINIMAL_WIDTH;
 		resize (c, d);
 
 		if (!moveTop && !moveBottom && !moveLeft && !moveRight)

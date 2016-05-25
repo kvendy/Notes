@@ -27,6 +27,7 @@ private:
 	int mousePressedX, mousePressedY;
 	bool isPressed, moveTop, moveBottom, moveRight, moveLeft;
 	void init();
+	Qt::CursorShape chooseCursorShape(int x, int y, int width, int height);
 public:
 	Notes();
 	Notes(QColor, QColor, QPoint, QSize, QString, bool);
