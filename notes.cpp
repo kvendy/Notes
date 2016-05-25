@@ -425,12 +425,12 @@ void Notes::getPos (QPoint inPos, int inWidth)
 			//if (abs(note->pos().x() - a) < 20)
 				//a += note->width() + 10;
 
-		if (a + width() > qApp->desktop()->availableGeometry().right())
+		if (a + width() > qApp->desktop()->availableGeometry(this).right())
 		{
 			a -= 4 * width() - 20;
 			b += 20;
 		}
-		if (b + height() > qApp->desktop()->availableGeometry().height())
+		if (b + height() > qApp->desktop()->availableGeometry(this).height())
 		{
 			a += 20;
 			b -= height() - 20;
