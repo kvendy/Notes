@@ -545,6 +545,8 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 		{
 			if(GetWindowText(hwnd, title, 255))
 				otherWindowsNames.append(QString::fromWCharArray(title));
+			else
+				otherWindowsNames.append("");
 
 			otherWindows.append(QRect(x, y, width, height));
 		}
