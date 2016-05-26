@@ -5,3 +5,4 @@ HEADERS += notes.h \
     geometry.h
 RC_FILE = notes.rc
 RESOURCES += notes.qrc
+LIBS += -lUser32

@@ -138,6 +138,8 @@ void Notes::mousePressEvent(QMouseEvent* pe)
 	mousePressedY = pe->y();
 
 	position = Position(pe->x(), pe->y(), width(), height());
+
+	getOSWindows();
 }
 
 void Notes::mouseReleaseEvent(QMouseEvent* pe)
@@ -145,6 +147,9 @@ void Notes::mouseReleaseEvent(QMouseEvent* pe)
 	isPressed = false;
 
 	position.clear();
+
+	qDebug() << otherWindows;
+	qDebug() << x() << y() << width() << height();
 }
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
@@ -303,6 +308,82 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			}
 		}
 
+		foreach(QRect it, otherWindows)
+		{
+			anotherX1 = it.x();
+			anotherY1 = it.y();
+			anotherX2 = it.x() + it.width();
+			anotherY2 = it.y() + it.height();
+
+			if ((x() < anotherX2 + SNAP)&&(x() > anotherX1 - width() - SNAP)) //область сравнения по горизонтали
+			{
+				//это у нас одинаковые стороны сближаются
+
+				if (abs(anotherY2 - (b + height())) < SNAP)//это нижняя сторона
+				{
+					if (position.bottom())
+						resize(c, anotherY2 - b);
+					b = anotherY2 - height();
+				}
+				if (abs(b - anotherY1) < SNAP)//а это верхняя
+				{
+					if (position.top())
+						resize(c, b - anotherY1 + height());
+					b = anotherY1;
+				}
+
+				//а тут типа противоположные
+
+				if (abs(b - anotherY2) < SNAP)//верх
+				{
+					if (position.top())
+						resize(c, b - anotherY2 + height());
+					b = anotherY2;
+				}
+				if (abs(anotherY1 - (b + height())) < SNAP)//низ
+				{
+					if (position.bottom())
+						resize(c, anotherY1 - b);
+					b = anotherY1 - height();
+				}
+			}
+
+			if ((y() < anotherY2 + SNAP)&&(y() > anotherY1 - height() - SNAP)) //область сравнения по вертикали
+			{
+				//одинаковые
+
+				if (abs(anotherX2 - (a + width())) < SNAP)//правая сторона
+				{
+					if (position.right())
+						resize(anotherX2 - a, d);
+					a = anotherX2 - width();
+				}
+				if (abs(a - anotherX1) < SNAP)//левая
+				{
+					if (position.left())
+						resize(a - anotherX1 + width(), d);
+					a = anotherX1;
+				}
+
+				//противоположные
+
+				if (abs(a - anotherX2) < SNAP)//левая
+				{
+					if (position.left())
+						resize(a - anotherX2 + width(), d);
+					a = anotherX2;
+				}
+				if (abs(anotherX1 - (a + width())) < SNAP)//правая
+				{
+					if (position.right())
+						resize(anotherX1 - a, d);
+					a = anotherX1 - width();
+				}
+			}
+
+			    //на всякий случай, приоритет выше у того, что проверяется позже
+		}
+
 		//resize (c, d);
 		move(a, b);
 	}
@@ -438,6 +519,36 @@ void Notes::getPos (QPoint inPos, int inWidth)
 	}
 
 	move (a, b);
+}
+
+//#ifdef Q_WS_X11
+//    //linux code goes here
+//#elif Q_WS_WIN32
+BOOL Notes::StaticEnumWindowsProc(HWND hwnd, LPARAM lParam)
+{
+	Notes *pThis = reinterpret_cast<Notes*>(lParam);
+	return pThis->EnumWindowsProc(hwnd);
+}
+
+BOOL Notes::EnumWindowsProc(HWND hwnd)
+{
+	LPRECT lpRect;
+	if(::GetWindowRect(hwnd, lpRect))// && ::IsWindowVisible(hwnd))
+		otherWindows.append(QRect(lpRect->left, lpRect->top, lpRect->right - lpRect->left, lpRect->bottom - lpRect->top));
+	return TRUE;
+}
+
+//#else
+
+void Notes::getOSWindows()
+{
+	otherWindows.clear();
+
+//#ifdef Q_WS_X11
+//	//linux code goes here
+//#elif Q_WS_WIN32
+	::EnumWindows(StaticEnumWindowsProc, reinterpret_cast<LPARAM>(this));
+//#else
 }
 
 void resetNoteInstances()

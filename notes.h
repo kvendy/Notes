@@ -2,6 +2,7 @@
 #define __notes_h_
 
 #include "geometry.h"
+#include <windows.h>
 #include <QSystemTrayIcon>
 #include <QDialog>
 #include <QPushButton>
@@ -28,6 +29,7 @@ private:
 	int mousePressedX, mousePressedY;
 	bool isPressed;
 	Position position;
+	QList<QRect> otherWindows;
 	void init();
 public:
 	Notes();
@@ -38,6 +40,18 @@ public:
 	QColor color1, color2;
 	int instance;
 	bool onTop;
+
+//#ifdef Q_WS_X11
+//	//linux code goes here
+//#elif Q_WS_WIN32
+	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);
+	BOOL EnumWindowsProc(HWND hwnd);
+//#else
+//
+//#endif
+
+	void getOSWindows();
+
 protected:
 	virtual void paintEvent(QPaintEvent *);
 	virtual void mousePressEvent (QMouseEvent*);
