@@ -30,6 +30,7 @@ private:
 	bool isPressed;
 	Position position;
 	QList<QRect> otherWindows;
+	QList<QString> otherWindowsNames;
 	void init();
 public:
 	Notes();

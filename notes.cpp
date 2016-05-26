@@ -148,8 +148,8 @@ void Notes::mouseReleaseEvent(QMouseEvent* pe)
 
 	position.clear();
 
-	qDebug() << otherWindows;
-	qDebug() << x() << y() << width() << height();
+	//qDebug() << otherWindows;
+	//qDebug() << x() << y() << width() << height();
 }
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
@@ -532,9 +532,24 @@ BOOL Notes::StaticEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 BOOL Notes::EnumWindowsProc(HWND hwnd)
 {
-	LPRECT lpRect;
-	if(::GetWindowRect(hwnd, lpRect))// && ::IsWindowVisible(hwnd))
-		otherWindows.append(QRect(lpRect->left, lpRect->top, lpRect->right - lpRect->left, lpRect->bottom - lpRect->top));
+	int x = 0, y = 0, width = 0, height = 0;
+	RECT rect;
+	WCHAR title[255];
+	if(::GetWindowRect(hwnd, &rect) && ::IsWindowVisible(hwnd))
+	{
+		x = rect.left;
+		y = rect.top;
+		width = rect.right - rect.left;
+		height = rect.bottom - rect.top;
+		if (width != 0 && height != 0)
+		{
+			if(GetWindowText(hwnd, title, 255))
+				otherWindowsNames.append(QString::fromWCharArray(title));
+
+			otherWindows.append(QRect(x, y, width, height));
+		}
+	}
+
 	return TRUE;
 }
 
@@ -543,12 +558,16 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 void Notes::getOSWindows()
 {
 	otherWindows.clear();
+	otherWindowsNames.clear();
 
 //#ifdef Q_WS_X11
 //	//linux code goes here
 //#elif Q_WS_WIN32
 	::EnumWindows(StaticEnumWindowsProc, reinterpret_cast<LPARAM>(this));
 //#else
+
+	for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
+		qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
 }
 
 void resetNoteInstances()
