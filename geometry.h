@@ -2,11 +2,15 @@
 #define GEOMETRY_H
 
 #include <qnamespace.h>
+#include <QMap>
 
-const int MINIMAL_WIDTH = 50;
+const int MINIMAL_WIDTH  = 100;
+const int MINIMAL_HEIGHT = 100;
 const int BORDER = 3;
 const int CORNER = 10;
-const int SNAP = 10;
+const int SNAP = 50;
+
+typedef QMap<int, QPair<int, int>> Line;
 
 enum class Horizontal
 {

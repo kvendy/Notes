@@ -31,6 +31,7 @@ private:
 	Position position;
 	QList<QRect> otherWindows;
 	QList<QString> otherWindowsNames;
+	Line horLines, vertLines;
 	void init();
 public:
 	Notes();

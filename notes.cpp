@@ -154,238 +154,75 @@ void Notes::mouseReleaseEvent(QMouseEvent* pe)
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
 {
-	int a = x(), b = y(), c = width(), d = height();
+	int a = x(), b = y(), c = width(), d = height(),
+	    newX = x(), newY = y(), newWidth = width(), newHeight = height();
 
 	if (!isPressed)
 		setCursor(Position(pe->x(), pe->y(), width(), height()).toCursorShape());
 
 	if (isPressed)
 	{
-		if (position.left() && (c > MINIMAL_WIDTH))
+		//считаем новый Rect
+		if (position.left())
 		{
-			c = width() - pe->x();
-			a = pe->globalX();// - pressedX; //Оно работает нормально при значении Pressed равном нулю только почему-то
+			newX = pe->globalX();
+			newWidth = newWidth - pe->x();
 		}
 		else if (position.right())
-			c = pe->x();// + width() - pressedX; тут нужно старое значение ширины
-		if (position.top() && (d > MINIMAL_WIDTH))
+			newWidth = pe->x();
+
+		if (position.top())
 		{
-			d = height() - pe->y();
-			b = pe->globalY();// - pressedY;  //Оно работает нормально при значении Pressed равном нулю только почему-то
+			newY = pe->globalY();
+			newHeight = newHeight - pe->y();
 		}
 		else if (position.bottom())
-			d = pe->y();// + height() - pressedY; тут нужно старое значение ширины
-
-		if (c < MINIMAL_WIDTH)
-			c = MINIMAL_WIDTH;
-		if (d < MINIMAL_WIDTH)
-			d = MINIMAL_WIDTH;
-		if (a > x() + width() - MINIMAL_WIDTH)
-			a = x() + width() - MINIMAL_WIDTH;
-		if (b > y() + height() - MINIMAL_WIDTH)
-			b = y() + height() - MINIMAL_WIDTH;
-		resize (c, d);
+			newHeight = pe->y();
 
 		if (!position.top() && !position.bottom() && !position.left() && !position.right())
 		{
-			a = pe->globalX() - mousePressedX;
-			b = pe->globalY() - mousePressedY;
+			newX = pe->globalX() - mousePressedX;
+			newY = pe->globalY() - mousePressedY;
 		}
 
-		if (abs(a - qApp->desktop()->availableGeometry(this).x()) < SNAP)
-		{
-			if (position.left())
-				resize(a - qApp->desktop()->availableGeometry(this).x() + width(), d);
-			    //c = a - qApp->desktop()->availableGeometry().x() + width();
-			a = qApp->desktop()->availableGeometry(this).x();
-		}
-		else if (abs(qApp->desktop()->availableGeometry(this).right() - (a + width())) < SNAP)
-		{
-			if (position.right())
-				resize(qApp->desktop()->availableGeometry(this).right() - a, d);
-			    //c = qApp->desktop()->availableGeometry().right() - a;
-			//else
-			    a = qApp->desktop()->availableGeometry(this).right() - width();
-		}
-		if (abs(b - qApp->desktop()->availableGeometry(this).y()) < SNAP)
-		{
-			if (position.top())
-				resize(c, b - qApp->desktop()->availableGeometry(this).y() + height());
-			    //d = b - qApp->desktop()->availableGeometry().y() + height();
-			b = qApp->desktop()->availableGeometry(this).y();
-		}
-		else if (abs(qApp->desktop()->availableGeometry(this).bottom() - (b + height())) < SNAP)
-		{
-			if (position.bottom())
-				resize(c, qApp->desktop()->availableGeometry(this).bottom() - b);
-			    //d = qApp->desktop()->availableGeometry().bottom() - b;
-			//else
-			    b = qApp->desktop()->availableGeometry(this).bottom() - height();
-		}
+		//граничные условия
+		//if (newWidth < MINIMAL_WIDTH)
+		//	return;
+		//if (newHeight < MINIMAL_HEIGHT)
+		//	return;
+		//
+		//int minimalDistnce = SNAP + 1;
 
-		//попробуем поприлипать к своим же окнам
-		//Новый ресайз работает
-		//но с проблемами: при ресайзе за угол и взаимодействии с несколькими другими окнами течет размер
-
-		int anotherX1, anotherY1, anotherX2, anotherY2;
-
-		foreach(Notes *note, allMyNotes)
+		for (auto it = horLines.lowerBound(newY - SNAP); it.key() < horLines.upperBound(newY + newHeight + SNAP).key(); ++it)
 		{
-			if (note != this) //может наступить момент, когда он будет сам с собой сверяться. отсекаем на всякий случай
+			if ((it.value().first < newX + newWidth + SNAP) &&
+			    (it.value().second > newX - SNAP))
 			{
-				anotherX1 = note->x();
-				anotherY1 = note->y();
-				anotherX2 = note->x() + note->width();
-				anotherY2 = note->y() + note->height();
-
-				if ((x() < anotherX2 + SNAP)&&(x() > anotherX1 - width() - SNAP)) //область сравнения по горизонтали
-				{
-					//это у нас одинаковые стороны сближаются
-
-					if (abs(anotherY2 - (b + height())) < SNAP)//это нижняя сторона
-					{
-						if (position.bottom())
-							resize(c, anotherY2 - b);
-						b = anotherY2 - height();
-					}
-					if (abs(b - anotherY1) < SNAP)//а это верхняя
-					{
-						if (position.top())
-							resize(c, b - anotherY1 + height());
-						b = anotherY1;
-					}
-
-					//а тут типа противоположные
-
-					if (abs(b - anotherY2) < SNAP)//верх
-					{
-						if (position.top())
-							resize(c, b - anotherY2 + height());
-						b = anotherY2;
-					}
-					if (abs(anotherY1 - (b + height())) < SNAP)//низ
-					{
-						if (position.bottom())
-							resize(c, anotherY1 - b);
-						b = anotherY1 - height();
-					}
-				}
-
-				if ((y() < anotherY2 + SNAP)&&(y() > anotherY1 - height() - SNAP)) //область сравнения по вертикали
-				{
-					//одинаковые
-
-					if (abs(anotherX2 - (a + width())) < SNAP)//правая сторона
-					{
-						if (position.right())
-							resize(anotherX2 - a, d);
-						a = anotherX2 - width();
-					}
-					if (abs(a - anotherX1) < SNAP)//левая
-					{
-						if (position.left())
-							resize(a - anotherX1 + width(), d);
-						a = anotherX1;
-					}
-
-					//противоположные
-
-					if (abs(a - anotherX2) < SNAP)//левая
-					{
-						if (position.left())
-							resize(a - anotherX2 + width(), d);
-						a = anotherX2;
-					}
-					if (abs(anotherX1 - (a + width())) < SNAP)//правая
-					{
-						if (position.right())
-							resize(anotherX1 - a, d);
-						a = anotherX1 - width();
-					}
-				}
-
-				//на всякий случай, приоритет выше у того, что проверяется позже
+				if (abs(newY - it.key()) < SNAP)
+					newY = it.key();
+				if (abs(newY + newHeight - it.key()) < SNAP)
+					newY = it.key() - newHeight;
 			}
 		}
 
-		foreach(QRect it, otherWindows)
+		for (auto it = vertLines.lowerBound(newX - SNAP); it.key() < vertLines.upperBound(newX + newWidth + SNAP).key(); ++it)
 		{
-			anotherX1 = it.x();
-			anotherY1 = it.y();
-			anotherX2 = it.x() + it.width();
-			anotherY2 = it.y() + it.height();
-
-			if ((x() < anotherX2 + SNAP)&&(x() > anotherX1 - width() - SNAP)) //область сравнения по горизонтали
+			if ((it.value().first < newY + newHeight + SNAP) &&
+			    (it.value().second > newY - SNAP))
 			{
-				//это у нас одинаковые стороны сближаются
-
-				if (abs(anotherY2 - (b + height())) < SNAP)//это нижняя сторона
-				{
-					if (position.bottom())
-						resize(c, anotherY2 - b);
-					b = anotherY2 - height();
-				}
-				if (abs(b - anotherY1) < SNAP)//а это верхняя
-				{
-					if (position.top())
-						resize(c, b - anotherY1 + height());
-					b = anotherY1;
-				}
-
-				//а тут типа противоположные
-
-				if (abs(b - anotherY2) < SNAP)//верх
-				{
-					if (position.top())
-						resize(c, b - anotherY2 + height());
-					b = anotherY2;
-				}
-				if (abs(anotherY1 - (b + height())) < SNAP)//низ
-				{
-					if (position.bottom())
-						resize(c, anotherY1 - b);
-					b = anotherY1 - height();
-				}
+				if (abs(newX - it.key()) < SNAP)
+					newX = it.key();
+				if (abs(newX + newWidth - it.key()) < SNAP)
+					newX = it.key() - newWidth;
 			}
-
-			if ((y() < anotherY2 + SNAP)&&(y() > anotherY1 - height() - SNAP)) //область сравнения по вертикали
-			{
-				//одинаковые
-
-				if (abs(anotherX2 - (a + width())) < SNAP)//правая сторона
-				{
-					if (position.right())
-						resize(anotherX2 - a, d);
-					a = anotherX2 - width();
-				}
-				if (abs(a - anotherX1) < SNAP)//левая
-				{
-					if (position.left())
-						resize(a - anotherX1 + width(), d);
-					a = anotherX1;
-				}
-
-				//противоположные
-
-				if (abs(a - anotherX2) < SNAP)//левая
-				{
-					if (position.left())
-						resize(a - anotherX2 + width(), d);
-					a = anotherX2;
-				}
-				if (abs(anotherX1 - (a + width())) < SNAP)//правая
-				{
-					if (position.right())
-						resize(anotherX1 - a, d);
-					a = anotherX1 - width();
-				}
-			}
-
-			    //на всякий случай, приоритет выше у того, что проверяется позже
 		}
 
-		//resize (c, d);
-		move(a, b);
+		//    //на всякий случай, приоритет выше у того, что проверяется позже
+
+		if (newX != x() || newY != y())
+			move(newX, newY);
+		if (newWidth != width() || newHeight != height())
+			resize (newWidth, newHeight);
 	}
 }
 
@@ -541,7 +378,7 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 		y = rect.top;
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
-		if (width != 0 && height != 0)
+		if (width != 0 && height != 0 && (x != this->x() || y != this->y() || width != this->width() || height != this->height()))
 		{
 			if(GetWindowText(hwnd, title, 255))
 				otherWindowsNames.append(QString::fromWCharArray(title));
@@ -549,6 +386,12 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 				otherWindowsNames.append("");
 
 			otherWindows.append(QRect(x, y, width, height));
+
+			horLines.insert(y, {x, x + width});
+			horLines.insert(y + height, {x, x + width});
+
+			vertLines.insert(x, {y, y + height});
+			vertLines.insert(x + width, {y, y + height});
 		}
 	}
 
@@ -561,6 +404,8 @@ void Notes::getOSWindows()
 {
 	otherWindows.clear();
 	otherWindowsNames.clear();
+	horLines.clear();
+	vertLines.clear();
 
 //#ifdef Q_WS_X11
 //	//linux code goes here
@@ -568,8 +413,8 @@ void Notes::getOSWindows()
 	::EnumWindows(StaticEnumWindowsProc, reinterpret_cast<LPARAM>(this));
 //#else
 
-	for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
-		qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
+	//for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
+	//	qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
 }
 
 void resetNoteInstances()
