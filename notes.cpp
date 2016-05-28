@@ -191,31 +191,67 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 		//if (newHeight < MINIMAL_HEIGHT)
 		//	return;
 		//
-		//int minimalDistnce = SNAP + 1;
+		int minimalDistance = SNAP + 1, optimalX = newX, optimalY = newY,
+		                                optimalHeight = newHeight, optimalWidth = newWidth;
 
+		if (!position.right() && !position.left())
 		for (auto it = horLines.lowerBound(newY - SNAP); it.key() < horLines.upperBound(newY + newHeight + SNAP).key(); ++it)
 		{
 			if ((it.value().first < newX + newWidth + SNAP) &&
 			    (it.value().second > newX - SNAP))
 			{
-				if (abs(newY - it.key()) < SNAP)
-					newY = it.key();
-				if (abs(newY + newHeight - it.key()) < SNAP)
-					newY = it.key() - newHeight;
+				if ((abs(newY - it.key()) < minimalDistance) && !position.bottom())
+				{
+					minimalDistance = abs(newY - it.key());
+
+					optimalY = it.key();
+					if (position.top())
+						optimalHeight = newHeight + newY - it.key();
+				}
+				if ((abs(newY + newHeight - it.key()) < minimalDistance) && !position.top())
+				{
+					minimalDistance = abs(newY + newHeight - it.key());
+
+					if (position.bottom())
+						optimalHeight = it.key() - newY;
+					else
+						optimalY = it.key() - newHeight;
+				}
 			}
 		}
 
+		newY = optimalY;
+		newHeight = optimalHeight;
+
+		minimalDistance = SNAP + 1;
+
+		if (!position.top() && !position.bottom())
 		for (auto it = vertLines.lowerBound(newX - SNAP); it.key() < vertLines.upperBound(newX + newWidth + SNAP).key(); ++it)
 		{
 			if ((it.value().first < newY + newHeight + SNAP) &&
 			    (it.value().second > newY - SNAP))
 			{
-				if (abs(newX - it.key()) < SNAP)
-					newX = it.key();
-				if (abs(newX + newWidth - it.key()) < SNAP)
-					newX = it.key() - newWidth;
+				if ((abs(newX - it.key()) < minimalDistance) && !position.right())
+				{
+					minimalDistance = abs(newX - it.key());
+					optimalX = it.key();
+					if (position.left())
+						optimalWidth = newWidth + newX - it.key();
+				}
+				if ((abs(newX + newWidth - it.key()) < minimalDistance) && !position.left())
+				{
+					minimalDistance = abs(newX + newWidth - it.key());
+
+					if (position.right())
+						optimalWidth = it.key() - newX;
+					else
+						optimalX = it.key() - newWidth;
+				}
 			}
 		}
+
+		newX = optimalX;
+		newWidth = optimalWidth;
 
 		//    //на всякий случай, приоритет выше у того, что проверяется позже
 
@@ -387,10 +423,10 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 
 			otherWindows.append(QRect(x, y, width, height));
 
-			horLines.insert(y, {x, x + width});
+			horLines.insert(y,          {x, x + width});
 			horLines.insert(y + height, {x, x + width});
 
-			vertLines.insert(x, {y, y + height});
+			vertLines.insert(x,         {y, y + height});
 			vertLines.insert(x + width, {y, y + height});
 		}
 	}
