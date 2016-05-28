@@ -34,7 +34,7 @@ Notes::Notes() : QWidget(0),
 	mousePressedX(0), mousePressedY(0),
     isPressed(false),
     color1(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
-    color2(color1.darker(130)),
+    color2(color1.darker(110)),
     onTop(false)
 {
 	init();
@@ -65,16 +65,21 @@ void Notes::init()
 {
 	pmnu = new QMenu("&Menu", this);
 
-	pmnu->addAction("&Blue", this, SLOT(slotSetColor3()));
-	pmnu->addAction("&Green", this, SLOT(slotSetColor1()));
-	pmnu->addAction("&Pink", this, SLOT(slotSetColor4()));
-	pmnu->addAction("P&urple", this, SLOT(slotSetColor2()));
-	pmnu->addAction("&White", this, SLOT(slotSetColor5()));
-	pmnu->addAction("&Yellow", this, SLOT(slotSetColor6()));
+	colors.insert("&Blue",   QColor::fromRgb(217, 243, 251));
+	colors.insert("&Green",  QColor::fromRgb(210, 255, 204));
+	colors.insert("&Pink",   QColor::fromRgb(246, 211, 246));
+	colors.insert("P&urple", QColor::fromRgb(222, 218, 254));
+	colors.insert("&White",  QColor::fromRgb(255, 255, 255));
+	colors.insert("&Yellow", QColor::fromRgb(254, 254, 204));
 
-	connect(&cmdNew, SIGNAL(clicked()), SLOT(slotNewForm()));
-	connect(&cmdTop, SIGNAL(clicked()), SLOT(slotTopForm()));
-	connect(&cmdClose, SIGNAL(clicked()), SLOT(slotCloseForm()));
+	for (auto it = colors.cbegin(); it != colors.cend(); ++it)
+		pmnu->addAction(it.key());
+
+	connect(pmnu, SIGNAL(triggered(QAction*)), this, SLOT(setColorByAction(QAction*)));
+
+	connect(&cmdNew, SIGNAL(clicked()), SLOT(newForm()));
+	connect(&cmdTop, SIGNAL(clicked()), SLOT(topForm()));
+	connect(&cmdClose, SIGNAL(clicked()), SLOT(closeForm()));
 
 	cmdNew.setFixedSize (24, 24);
 	cmdNew.setFlat(true);
@@ -212,7 +217,7 @@ void Notes::contextMenuEvent ( QContextMenuEvent * event )
 	pmnu->popup(event->globalPos());
 }
 
-void Notes::slotNewForm()
+void Notes::newForm()
 {
 	Notes* note = new Notes();
 	note->show();
@@ -221,7 +226,7 @@ void Notes::slotNewForm()
 	resetNoteInstances();
 }
 
-void Notes::slotTopForm()
+void Notes::topForm()
 {
 	int widthChangeTop = width();
 	int heightChangeTop = height();
@@ -242,55 +247,18 @@ void Notes::slotTopForm()
 	show();
 }
 
-void Notes::slotCloseForm()
+void Notes::setColorByAction(QAction * act)
+{
+	color1 = colors.find(act->text()).value();
+	color2 = color1.darker(110);
+	update();
+}
+
+void Notes::closeForm()
 {
 	allMyNotes.remove(instance);
 	resetNoteInstances();
 	close();
-}
-
-//это ужасно
-
-void Notes::slotSetColor1()
-{
-	color1.setRgb(210,255,204);
-	color2.setRgb(177,232,174);
-	update ();
-}
-
-void Notes::slotSetColor2()
-{
-	color1.setRgb(222,218,254);
-	color2.setRgb(198,184,254);
-	update ();
-}
-
-void Notes::slotSetColor3()
-{
-	color1.setRgb(217,243,251);
-	color2.setRgb(184,219,244);
-	update ();
-}
-
-void Notes::slotSetColor4()
-{
-	color1.setRgb(246,211,246);
-	color2.setRgb(235,174,235);
-	update ();
-}
-
-void Notes::slotSetColor5()
-{
-	color1.setRgb(255,255,255);
-	color2.setRgb(235,235,235);
-	update ();
-}
-
-void Notes::slotSetColor6()
-{
-	color1.setRgb(254,254,204);
-	color2.setRgb(252,249,161);
-	update ();
 }
 
 void Notes::getPos (QPoint inPos, int inWidth)
@@ -322,9 +290,7 @@ void Notes::getPos (QPoint inPos, int inWidth)
 	move (a, b);
 }
 
-//#ifdef Q_WS_X11
-//    //linux code goes here
-//#elif Q_WS_WIN32
+#ifdef Q_OS_WIN32
 BOOL Notes::StaticEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	Notes *pThis = reinterpret_cast<Notes*>(lParam);
@@ -361,8 +327,7 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 
 	return TRUE;
 }
-
-//#else
+#endif
 
 void Notes::getOSWindows()
 {

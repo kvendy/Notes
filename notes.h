@@ -2,11 +2,14 @@
 #define __notes_h_
 
 #include "geometry.h"
-#include <windows.h>
 #include <QSystemTrayIcon>
 #include <QDialog>
 #include <QPushButton>
 #include <QTextEdit>
+
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#endif
 
 QT_BEGIN_NAMESPACE
 class QPushButton;
@@ -31,6 +34,7 @@ private:
 	Position position;
 	QList<QRect> otherWindows;
 	QList<QString> otherWindowsNames;
+	QMap<QString, QColor> colors;
 	Line horLines, vertLines;
 	void init();
 public:
@@ -43,14 +47,10 @@ public:
 	int instance;
 	bool onTop;
 
-//#ifdef Q_WS_X11
-//	//linux code goes here
-//#elif Q_WS_WIN32
+#ifdef Q_OS_WIN32
 	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);
 	BOOL EnumWindowsProc(HWND hwnd);
-//#else
-//
-//#endif
+#endif
 
 	void getOSWindows();
 	void snap(int &x, int &y, int &width, int &height);
@@ -62,15 +62,10 @@ protected:
 	virtual void mouseMoveEvent (QMouseEvent*);
 	virtual void contextMenuEvent (QContextMenuEvent*);
 public slots:
-	void slotNewForm();
-	void slotCloseForm();
-	void slotTopForm();
-	void slotSetColor1();
-	void slotSetColor2();
-	void slotSetColor3();
-	void slotSetColor4();
-	void slotSetColor5();
-	void slotSetColor6();
+	void newForm();
+	void closeForm();
+	void topForm();
+	void setColorByAction(QAction*act);
 };
 //------------------------------------------------------------------------------
 
