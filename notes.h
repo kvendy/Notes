@@ -53,6 +53,7 @@ public:
 //#endif
 
 	void getOSWindows();
+	void snap(int &x, int &y, int &width, int &height);
 
 protected:
 	virtual void paintEvent(QPaintEvent *);

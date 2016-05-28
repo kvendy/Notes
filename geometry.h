@@ -8,7 +8,7 @@ const int MINIMAL_WIDTH  = 100;
 const int MINIMAL_HEIGHT = 100;
 const int BORDER = 3;
 const int CORNER = 10;
-const int SNAP = 50;
+const int SNAP = 10;
 
 typedef QMultiMap<int, QPair<int, int>> Line;
 
@@ -37,7 +37,7 @@ public:
 
 	Position(int x, int y, int width, int height);
 
-	Qt::CursorShape toCursorShape();
+	Qt::CursorShape toCursorShape() const;
 
 	void clear()
 	{
@@ -45,19 +45,19 @@ public:
 		vertical   = Vertical::none;
 	}
 
-	bool left()
+	bool left() const
 	{
 		return horizontal == Horizontal::left;
 	}
-	bool right()
+	bool right() const
 	{
 		return horizontal == Horizontal::right;
 	}
-	bool top()
+	bool top() const
 	{
 		return vertical == Vertical::top;
 	}
-	bool bottom()
+	bool bottom() const
 	{
 		return vertical == Vertical::bottom;
 	}

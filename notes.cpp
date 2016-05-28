@@ -154,30 +154,29 @@ void Notes::mouseReleaseEvent(QMouseEvent* pe)
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
 {
-	int a = x(), b = y(), c = width(), d = height(),
-	    newX = x(), newY = y(), newWidth = width(), newHeight = height();
-
 	if (!isPressed)
 		setCursor(Position(pe->x(), pe->y(), width(), height()).toCursorShape());
 
 	if (isPressed)
 	{
+		int newX = x(), newY = y(), newWidth = width(), newHeight = height();
+
 		//считаем новый Rect
 		if (position.left())
 		{
+			newWidth = newWidth - pe->globalX() + newX;
 			newX = pe->globalX();
-			newWidth = newWidth - pe->x();
 		}
 		else if (position.right())
-			newWidth = pe->x();
+			newWidth = pe->globalX() - newX;
 
 		if (position.top())
 		{
+			newHeight = newHeight - pe->globalY() + newY;
 			newY = pe->globalY();
-			newHeight = newHeight - pe->y();
 		}
 		else if (position.bottom())
-			newHeight = pe->y();
+			newHeight = pe->globalY() - newY;
 
 		if (!position.top() && !position.bottom() && !position.left() && !position.right())
 		{
@@ -185,80 +184,9 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			newY = pe->globalY() - mousePressedY;
 		}
 
-		//граничные условия
-		//if (newWidth < MINIMAL_WIDTH)
-		//	return;
-		//if (newHeight < MINIMAL_HEIGHT)
-		//	return;
-		//
-		int minimalDistance = SNAP + 1, optimalX = newX, optimalY = newY,
-		                                optimalHeight = newHeight, optimalWidth = newWidth;
+		snap(newX, newY, newWidth, newHeight);
 
-		if (!position.right() && !position.left())
-		for (auto it = horLines.lowerBound(newY - SNAP); it.key() < horLines.upperBound(newY + newHeight + SNAP).key(); ++it)
-		{
-			if ((it.value().first < newX + newWidth + SNAP) &&
-			    (it.value().second > newX - SNAP))
-			{
-				if ((abs(newY - it.key()) < minimalDistance) && !position.bottom())
-				{
-					minimalDistance = abs(newY - it.key());
-
-					optimalY = it.key();
-					if (position.top())
-						optimalHeight = newHeight + newY - it.key();
-				}
-				if ((abs(newY + newHeight - it.key()) < minimalDistance) && !position.top())
-				{
-					minimalDistance = abs(newY + newHeight - it.key());
-
-					if (position.bottom())
-						optimalHeight = it.key() - newY;
-					else
-						optimalY = it.key() - newHeight;
-				}
-			}
-		}
-
-		newY = optimalY;
-		newHeight = optimalHeight;
-
-		minimalDistance = SNAP + 1;
-
-		if (!position.top() && !position.bottom())
-		for (auto it = vertLines.lowerBound(newX - SNAP); it.key() < vertLines.upperBound(newX + newWidth + SNAP).key(); ++it)
-		{
-			if ((it.value().first < newY + newHeight + SNAP) &&
-			    (it.value().second > newY - SNAP))
-			{
-				if ((abs(newX - it.key()) < minimalDistance) && !position.right())
-				{
-					minimalDistance = abs(newX - it.key());
-					optimalX = it.key();
-					if (position.left())
-						optimalWidth = newWidth + newX - it.key();
-				}
-				if ((abs(newX + newWidth - it.key()) < minimalDistance) && !position.left())
-				{
-					minimalDistance = abs(newX + newWidth - it.key());
-
-					if (position.right())
-						optimalWidth = it.key() - newX;
-					else
-						optimalX = it.key() - newWidth;
-				}
-			}
-		}
-
-		newX = optimalX;
-		newWidth = optimalWidth;
-
-		//    //на всякий случай, приоритет выше у того, что проверяется позже
-
-		if (newX != x() || newY != y())
-			move(newX, newY);
-		if (newWidth != width() || newHeight != height())
-			resize (newWidth, newHeight);
+		setGeometry(newX, newY, newWidth, newHeight);
 	}
 }
 
@@ -451,6 +379,70 @@ void Notes::getOSWindows()
 
 	//for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
 	//	qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
+}
+
+void Notes::snap(int &x, int &y, int &width, int &height)
+{
+	int optimalX = x, optimalY = y, optimalHeight = height, optimalWidth = width,
+	    minimalDistance = SNAP + 1;
+
+	if (!position.right() && !position.left())
+	for (auto it = horLines.lowerBound(y - SNAP); it.key() < horLines.upperBound(y + height + SNAP).key(); ++it)
+	{
+		if ((it.value().first < x + width + SNAP) &&
+		    (it.value().second > x - SNAP))
+		{
+			if ((abs(y - it.key()) < minimalDistance) && !position.bottom())
+			{
+				minimalDistance = abs(y - it.key());
+
+				optimalY = it.key();
+				if (position.top())
+					optimalHeight = height + y - it.key();
+			}
+			if ((abs(y + height - it.key()) < minimalDistance) && !position.top())
+			{
+				minimalDistance = abs(y + height - it.key());
+
+				if (position.bottom())
+					optimalHeight = it.key() - y;
+				else
+					optimalY = it.key() - height;
+			}
+		}
+	}
+
+	minimalDistance = SNAP + 1;
+
+	if (!position.top() && !position.bottom())
+	for (auto it = vertLines.lowerBound(x - SNAP); it.key() < vertLines.upperBound(x + width + SNAP).key(); ++it)
+	{
+		if ((it.value().first < y + height + SNAP) &&
+		    (it.value().second > y - SNAP))
+		{
+			if ((abs(x - it.key()) < minimalDistance) && !position.right())
+			{
+				minimalDistance = abs(x - it.key());
+				optimalX = it.key();
+				if (position.left())
+					optimalWidth = width + x - it.key();
+			}
+			if ((abs(x + width - it.key()) < minimalDistance) && !position.left())
+			{
+				minimalDistance = abs(x + width - it.key());
+
+				if (position.right())
+					optimalWidth = it.key() - x;
+				else
+					optimalX = it.key() - width;
+			}
+		}
+	}
+
+	x = optimalX;
+	y = optimalY;
+	width = optimalWidth;
+	height = optimalHeight;
 }
 
 void resetNoteInstances()

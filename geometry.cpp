@@ -17,7 +17,7 @@ Position::Position(int x, int y, int width, int height)
 		horizontal = Horizontal::none;
 }
 
-Qt::CursorShape Position::toCursorShape()
+Qt::CursorShape Position::toCursorShape() const
 {
 	Qt::CursorShape shape;
 
