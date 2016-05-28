@@ -1,8 +1,8 @@
-QT      += core gui widgets
-SOURCES += notes.cpp \
-    geometry.cpp
-HEADERS += notes.h \
-    geometry.h
-RC_FILE = notes.rc
-RESOURCES += notes.qrc
-LIBS += -lUser32
+QT             += core gui widgets
+SOURCES        += notes.cpp \
+                  geometry.cpp
+HEADERS        += notes.h \
+                  geometry.h
+RESOURCES      += notes.qrc
+win32: LIBS    += -lUser32
+win32: RC_ICONS = notes.ico
