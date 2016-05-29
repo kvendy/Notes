@@ -9,6 +9,9 @@
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
+#elif defined(Q_OS_LINUX)
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #endif
 
 QT_BEGIN_NAMESPACE
@@ -50,6 +53,8 @@ public:
 #ifdef Q_OS_WIN32
 	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);
 	BOOL EnumWindowsProc(HWND hwnd);
+#elif defined(Q_OS_LINUX)
+	void enumerateWindows(Display *display, Window rootWindow);
 #endif
 
 	void getOSWindows();

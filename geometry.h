@@ -10,7 +10,7 @@ const int BORDER = 3;
 const int CORNER = 10;
 const int SNAP = 10;
 
-typedef QMultiMap<int, QPair<int, int>> Line;
+typedef QMultiMap<int, QPair<int, int> > Line;
 
 enum class Horizontal
 {

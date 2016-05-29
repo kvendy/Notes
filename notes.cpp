@@ -15,8 +15,6 @@
 	б. закрыть среднее
 	в. создавать окна от первого
  3) Ресайз за угол, взаимодействие с несколькими окнами:
-	- если окон несколько, течет размер
-	- когда изменяю размер только в одной оси, прилипает к окнам по всем осям
 	- и вообще окно перемещается при достижении минимума сверху и слева, позор
  4) Не работает хоткей закрытия окна вообще и хоткей вывода в топ после первого использования
  5) Часто теряется фокус по закытию одного из окон; пропадает фокус при создании нвых окон хоткеем.
@@ -316,16 +314,51 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 				otherWindowsNames.append("");
 
 			otherWindows.append(QRect(x, y, width, height));
-
-			horLines.insert(y,          {x, x + width});
-			horLines.insert(y + height, {x, x + width});
-
-			vertLines.insert(x,         {y, y + height});
-			vertLines.insert(x + width, {y, y + height});
 		}
 	}
 
 	return TRUE;
+}
+#elif defined(Q_OS_LINUX)
+void Notes::enumerateWindows(Display *display, Window rootWindow)
+{
+	Status status;
+	Window root;
+	Window parent;
+	Window *children;
+	unsigned int childrenCount;
+	XWindowAttributes win_attr;
+
+	if(XQueryTree(display, rootWindow, &root, &parent, &children, &childrenCount))
+	{
+		for(unsigned int i = 0; i < childrenCount; ++i)
+		{
+			Window window = children[i];
+
+			char* name = '\0';
+			status = XFetchName(display, window, &name);
+			if (status >= Success)
+				otherWindowsNames.append(name);
+
+			/* query the window's attributes. */
+			status = XGetWindowAttributes(display, window, &win_attr);
+			if (status >= Success)
+			{
+				int screen_x, screen_y;
+
+				XTranslateCoordinates(display, root, root,
+									  win_attr.x, win_attr.y, &screen_x, &screen_y,
+									  &window);
+
+				otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
+			}
+
+			XFree(name);
+
+			enumerateWindows(display, children[i]);
+		}
+		XFree(children);
+	}
 }
 #endif
 
@@ -336,11 +369,22 @@ void Notes::getOSWindows()
 	horLines.clear();
 	vertLines.clear();
 
-//#ifdef Q_WS_X11
-//	//linux code goes here
-//#elif Q_WS_WIN32
+#ifdef Q_OS_WIN32
 	::EnumWindows(StaticEnumWindowsProc, reinterpret_cast<LPARAM>(this));
-//#else
+#elif defined(Q_OS_LINUX)
+	Display *display = XOpenDisplay(":0.0");
+	Window rootWindow = XDefaultRootWindow(display);
+	enumerateWindows(display, rootWindow);
+#endif
+
+	foreach (QRect rect, otherWindows)
+	{
+		horLines.insert(rect.y(),                  {rect.x(), rect.x() + rect.width()});
+		horLines.insert(rect.y()  + rect.height(), {rect.x(), rect.x() + rect.width()});
+
+		vertLines.insert(rect.x() + rect.width(),  {rect.y(), rect.y() + rect.height()});
+		vertLines.insert(rect.x(),                 {rect.y(), rect.y() + rect.height()});
+	}
 
 	//for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
 	//	qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
