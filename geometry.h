@@ -2,6 +2,7 @@
 #define GEOMETRY_H
 
 #include <qnamespace.h>
+#include <QRect>
 #include <QMultiMap>
 
 const int MINIMAL_WIDTH  = 100;
@@ -65,6 +66,18 @@ public:
 private:
 	Horizontal horizontal;
 	Vertical vertical;
+};
+
+class SnapManager
+{
+public:
+	void snap(QRect& rect, const Position& position);
+	void snap(int &x, int &y, int &width, int &height, const Position& position);
+	void clear();
+	void addRect(const QRect& rect);
+	void addRect(int x, int y, int width, int height);
+private:
+	Line horizontal, vertical;
 };
 
 

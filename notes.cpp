@@ -44,8 +44,8 @@ Notes::Notes(QColor inColor1, QColor inColor2, QPoint inPlace, QSize inSize, QSt
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
     isPressed(false),
+    txtl(inText),
 	color1(inColor1), color2(inColor2),
-	txtl(inText),
 	onTop(inTop)
 {
 	init();
@@ -125,8 +125,8 @@ void Notes::init()
 	txtl.setPalette(palette);
 
 	QFont font;
-	//font.setFamily(QString::fromUtf8("Flow"));
-	font.setFamily(QString::fromUtf8("Segoe Script"));
+	font.setFamily(QString::fromUtf8("Flow"));
+	//font.setFamily(QString::fromUtf8("Segoe Script"));
 	font.setPointSize(14);
 	//font.setBold(1);
 	setFont(font);
@@ -141,8 +141,9 @@ void Notes::mousePressEvent(QMouseEvent* pe)
 	mousePressedY = pe->y();
 
 	position = Position(pe->x(), pe->y(), width(), height());
-
-	getOSWindows();
+	sm.clear();
+	//getOSWindows();
+	getMyWindows();
 }
 
 void Notes::mouseReleaseEvent(QMouseEvent* pe)
@@ -187,7 +188,7 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 			newY = pe->globalY() - mousePressedY;
 		}
 
-		snap(newX, newY, newWidth, newHeight);
+		sm.snap(newX, newY, newWidth, newHeight, position);
 
 		setGeometry(newX, newY, newWidth, newHeight);
 	}
@@ -297,23 +298,25 @@ BOOL Notes::StaticEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 BOOL Notes::EnumWindowsProc(HWND hwnd)
 {
-	int x = 0, y = 0, width = 0, height = 0;
 	RECT rect;
 	WCHAR title[255];
 	if(::GetWindowRect(hwnd, &rect) && ::IsWindowVisible(hwnd))
 	{
-		x = rect.left;
-		y = rect.top;
-		width = rect.right - rect.left;
-		height = rect.bottom - rect.top;
-		if (width != 0 && height != 0 && (x != this->x() || y != this->y() || width != this->width() || height != this->height()))
+		int x      = rect.left,
+		    y      = rect.top,
+		    width  = rect.right  - rect.left,
+		    height = rect.bottom - rect.top;
+
+		if (width != 0 && height != 0 &&
+		    (x != this->x() || y != this->y() || width != this->width() || height != this->height()))
 		{
 			if(GetWindowText(hwnd, title, 255))
 				otherWindowsNames.append(QString::fromWCharArray(title));
 			else
 				otherWindowsNames.append("");
 
-			otherWindows.append(QRect(x, y, width, height));
+			//otherWindows.append(QRect(x, y, width, height));
+			sm.addRect(x, y, width, height);
 		}
 	}
 
@@ -350,7 +353,8 @@ void Notes::enumerateWindows(Display *display, Window rootWindow)
 									  win_attr.x, win_attr.y, &screen_x, &screen_y,
 									  &window);
 
-				otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
+				//otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
+				sm.addRect(screen_x, screen_y, win_attr.width, win_attr.height);
 			}
 
 			XFree(name);
@@ -366,8 +370,6 @@ void Notes::getOSWindows()
 {
 	otherWindows.clear();
 	otherWindowsNames.clear();
-	horLines.clear();
-	vertLines.clear();
 
 #ifdef Q_OS_WIN32
 	::EnumWindows(StaticEnumWindowsProc, reinterpret_cast<LPARAM>(this));
@@ -377,81 +379,15 @@ void Notes::getOSWindows()
 	enumerateWindows(display, rootWindow);
 #endif
 
-	foreach (QRect rect, otherWindows)
-	{
-		horLines.insert(rect.y(),                  {rect.x(), rect.x() + rect.width()});
-		horLines.insert(rect.y()  + rect.height(), {rect.x(), rect.x() + rect.width()});
-
-		vertLines.insert(rect.x() + rect.width(),  {rect.y(), rect.y() + rect.height()});
-		vertLines.insert(rect.x(),                 {rect.y(), rect.y() + rect.height()});
-	}
-
 	//for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
 	//	qDebug() << otherWindowsNames.at(i) << otherWindows.at(i);
 }
 
-void Notes::snap(int &x, int &y, int &width, int &height)
+void Notes::getMyWindows()
 {
-	int optimalX = x, optimalY = y, optimalHeight = height, optimalWidth = width,
-	    minimalDistance = SNAP + 1;
-
-	if (!position.right() && !position.left())
-	for (auto it = horLines.lowerBound(y - SNAP); it.key() < horLines.upperBound(y + height + SNAP).key(); ++it)
-	{
-		if ((it.value().first < x + width + SNAP) &&
-		    (it.value().second > x - SNAP))
-		{
-			if ((abs(y - it.key()) < minimalDistance) && !position.bottom())
-			{
-				minimalDistance = abs(y - it.key());
-
-				optimalY = it.key();
-				if (position.top())
-					optimalHeight = height + y - it.key();
-			}
-			if ((abs(y + height - it.key()) < minimalDistance) && !position.top())
-			{
-				minimalDistance = abs(y + height - it.key());
-
-				if (position.bottom())
-					optimalHeight = it.key() - y;
-				else
-					optimalY = it.key() - height;
-			}
-		}
-	}
-
-	minimalDistance = SNAP + 1;
-
-	if (!position.top() && !position.bottom())
-	for (auto it = vertLines.lowerBound(x - SNAP); it.key() < vertLines.upperBound(x + width + SNAP).key(); ++it)
-	{
-		if ((it.value().first < y + height + SNAP) &&
-		    (it.value().second > y - SNAP))
-		{
-			if ((abs(x - it.key()) < minimalDistance) && !position.right())
-			{
-				minimalDistance = abs(x - it.key());
-				optimalX = it.key();
-				if (position.left())
-					optimalWidth = width + x - it.key();
-			}
-			if ((abs(x + width - it.key()) < minimalDistance) && !position.left())
-			{
-				minimalDistance = abs(x + width - it.key());
-
-				if (position.right())
-					optimalWidth = it.key() - x;
-				else
-					optimalX = it.key() - width;
-			}
-		}
-	}
-
-	x = optimalX;
-	y = optimalY;
-	width = optimalWidth;
-	height = optimalHeight;
+	foreach(Notes *note, allMyNotes)
+		if (note != this) //может наступить момент, когда он будет сам с собой сверяться. отсекаем на всякий случай
+			sm.addRect(note->x(), note->y(), note->width(), note->height());
 }
 
 void resetNoteInstances()

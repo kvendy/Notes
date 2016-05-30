@@ -35,10 +35,10 @@ private:
 	int mousePressedX, mousePressedY;
 	bool isPressed;
 	Position position;
+	SnapManager sm;
 	QList<QRect> otherWindows;
 	QList<QString> otherWindowsNames;
 	QMap<QString, QColor> colors;
-	Line horLines, vertLines;
 	void init();
 public:
 	Notes();
@@ -58,7 +58,7 @@ public:
 #endif
 
 	void getOSWindows();
-	void snap(int &x, int &y, int &width, int &height);
+	void getMyWindows();
 
 protected:
 	virtual void paintEvent(QPaintEvent *);
