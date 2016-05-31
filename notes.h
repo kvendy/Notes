@@ -47,7 +47,6 @@ public:
 	void getPos (QPoint, int);
 	QTextEdit txtl;
 	QColor color1, color2;
-	int instance;
 	bool onTop;
 
 #ifdef Q_OS_WIN32
@@ -66,9 +65,9 @@ protected:
 	virtual void mouseReleaseEvent (QMouseEvent*);
 	virtual void mouseMoveEvent (QMouseEvent*);
 	virtual void contextMenuEvent (QContextMenuEvent*);
+	virtual void closeEvent(QCloseEvent *event);
 public slots:
 	void newForm();
-	void closeForm();
 	void topForm();
 	void setColorByAction(QAction*act);
 };

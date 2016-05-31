@@ -6,24 +6,18 @@
 
 /*
  Короче обнаруженные проблемы:
- 1) Закрываю заметку по Альт-Ф4, а потом ВНИЗАПНЕ крэш. Суть в том что не пересчитываются инстанции.
-	Возможные решения:
-	- перегрузить closeEvent,
-	- избавиться от счетчика инстанций и сделать итератор. Предпочтительно.
- 2) Окна накладываются, если:
+ 1) Окна накладываются, если:
 	а. сделать три окна,
 	б. закрыть среднее
 	в. создавать окна от первого
- 3) Не работает хоткей закрытия окна вообще и хоткей вывода в топ после первого использования
- 4) Часто теряется фокус по закытию одного из окон; пропадает фокус при создании нвых окон хоткеем.
+ 2) Не работает хоткей закрытия окна вообще и хоткей вывода в топ после первого использования
+ 3) Часто теряется фокус по закытию одного из окон; пропадает фокус при создании нвых окон хоткеем.
 	Нужно следить за фокусом вручную короче.
 ------------------------------------------------------------------------------------------------------
- 5) Ни в одной реализации липких окон нет проверки по внутренним границам. Убрать?
+ 4) Ни в одной реализации липких окон нет проверки по внутренним границам. Убрать?
 */
 
-QVector<Notes*> allMyNotes;
-
-void resetNoteInstances();
+QSet<Notes*> allMyNotes;
 
 Notes::Notes() : QWidget(0),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
@@ -75,7 +69,7 @@ void Notes::init()
 
 	connect(&cmdNew, SIGNAL(clicked()), SLOT(newForm()));
 	connect(&cmdTop, SIGNAL(clicked()), SLOT(topForm()));
-	connect(&cmdClose, SIGNAL(clicked()), SLOT(closeForm()));
+	connect(&cmdClose, SIGNAL(clicked()), SLOT(close()));
 
 	cmdNew.setFixedSize (24, 24);
 	cmdNew.setFlat(true);
@@ -220,13 +214,18 @@ void Notes::contextMenuEvent ( QContextMenuEvent * event )
 	pmnu->popup(event->globalPos());
 }
 
+void Notes::closeEvent(QCloseEvent *event)
+{
+	auto it = allMyNotes.find(this);
+	allMyNotes.erase(it);
+}
+
 void Notes::newForm()
 {
 	Notes* note = new Notes();
 	note->show();
-	allMyNotes.append(note);
+	allMyNotes.insert(note);
 	note->getPos(pos(), width());
-	resetNoteInstances();
 }
 
 void Notes::topForm()
@@ -255,13 +254,6 @@ void Notes::setColorByAction(QAction * act)
 	color1 = colors.find(act->text()).value();
 	color2 = color1.darker(110);
 	update();
-}
-
-void Notes::closeForm()
-{
-	allMyNotes.remove(instance);
-	resetNoteInstances();
-	close();
 }
 
 void Notes::getPos (QPoint inPos, int inWidth)
@@ -397,16 +389,6 @@ void Notes::getMyWindows()
 		sm.addRect(qApp->desktop()->availableGeometry(i));
 }
 
-void resetNoteInstances()
-{
-	int i = 0;
-	foreach(Notes *note, allMyNotes)
-	{
-		note->instance = i;
-		i++;
-	}
-}
-
 Medium::Medium(QObject* pobj) : QObject(pobj)
 {
 	notesHide = 0;
@@ -479,8 +461,7 @@ void Medium::slotNewNote()
 	Notes* note = new Notes();
 	note->getPos(QPoint(rand()%100 + 100, rand()%100 + 100), 0);
 	note->show();
-	allMyNotes.append(note);
-	resetNoteInstances();
+	allMyNotes.insert(note);
 }
 
 void Medium::slotTrayAct(QSystemTrayIcon::ActivationReason reason)
@@ -528,7 +509,7 @@ void readNotes()
 		{
 			Notes* note = new Notes(inColor1[i], inColor2[i], inPos[i], inSize[i], inText[i], inTop[i]);
 			note->show();
-			allMyNotes.append(note);
+			allMyNotes.insert(note);
 			note->activateWindow();
 		}
 	}
@@ -536,11 +517,9 @@ void readNotes()
 	{
 		Notes* note = new Notes();
 		note->show();
-		allMyNotes.append(note);
+		allMyNotes.insert(note);
 		note->activateWindow();
 	}
-
-	resetNoteInstances();
 }
 
 int main(int argc, char** argv)
