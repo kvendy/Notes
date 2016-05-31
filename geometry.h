@@ -74,6 +74,10 @@ public:
 	{
 		return vertical_ == Vertical::none && horizontal_ != Horizontal::none;
 	}
+	bool moving() const
+	{
+		return vertical_ == Vertical::none && horizontal_ == Horizontal::none;
+	}
 
 private:
 	Horizontal horizontal_;
