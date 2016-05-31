@@ -476,18 +476,16 @@ Medium::Medium(QObject* pobj) : QObject(pobj)
 
 void Medium::slotSaveNotes()
 {
-	//QList<NotesData> notesToSave;
 	QFile file("notes.dat");
 	file.open(QIODevice::WriteOnly);
 	QDataStream out(&file);
 
-	//foreach (Notes* note, allMyNotes)
-	//	if (!note->empty())
-	//		notesToSave.append(*note);
-
-	for (auto it = allMyNotes.begin(); it != allMyNotes.cend(); ++it)
+	auto it = allMyNotes.begin();
+	while (it != allMyNotes.end())
 		if ((*it)->empty())
-			allMyNotes.erase(it);
+			it = allMyNotes.erase(it);
+		else
+			++it;
 
 	out<<allMyNotes;
 
