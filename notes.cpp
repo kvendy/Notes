@@ -19,36 +19,64 @@
 
 QSet<Notes*> allMyNotes;
 
-Notes::Notes() : QWidget(0),
-	cmdNew("+"), cmdTop("^"), cmdClose("x"),
-	mousePressedX(0), mousePressedY(0),
-    isPressed(false),
-    color1(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
-    color2(color1.darker(110)),
-    onTop(false)
+
+NotesData::NotesData() :
+           text(""),
+           color(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
+           place(QRect(300, 300, 180, 165)),
+           onTop(false)
 {
-	init();
-	setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
-	resize(180, 165);
 }
 
-Notes::Notes(QColor inColor1, QColor inColor2, QPoint inPlace, QSize inSize, QString inText, bool inTop) : QWidget(0),
+NotesData::NotesData(const NotesData &nData)
+{
+	text  = nData.text;
+	color = nData.color;
+	place = nData.place;
+	onTop = nData.onTop;
+}
+
+NotesData::NotesData(QString inText, QColor inColor, QRect inPlace, bool inTop) :
+           text(inText),
+           color(inColor),
+           place(inPlace),
+           onTop(inTop)
+{
+}
+
+Notes::Notes() :
+    QWidget(0),
+    NotesData(),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
-    isPressed(false),
-    txtl(inText),
-	color1(inColor1), color2(inColor2),
-	onTop(inTop)
+    isPressed(false)
 {
 	init();
+}
 
-	if (onTop)
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
-	else
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+Notes::Notes(NotesData nData) :
+    QWidget(0),
+    NotesData(nData),
+    cmdNew("+"), cmdTop("^"), cmdClose("x"),
+    mousePressedX(0), mousePressedY(0),
+    isPressed(false)
+{
+	init();
+}
 
-	resize(inSize);
-	move(inPlace);
+Notes::Notes(QColor inColor, QRect inPlace, QString inText, bool inTop) :
+    QWidget(0),
+    NotesData(inText, inColor, inPlace, inTop),
+	cmdNew("+"), cmdTop("^"), cmdClose("x"),
+	mousePressedX(0), mousePressedY(0),
+    isPressed(false)
+{
+	init();
+}
+
+bool Notes::empty()
+{
+	return ctrlTxt.toPlainText().isEmpty();
 }
 
 void Notes::init()
@@ -71,6 +99,8 @@ void Notes::init()
 	connect(&cmdTop, SIGNAL(clicked()), SLOT(topForm()));
 	connect(&cmdClose, SIGNAL(clicked()), SLOT(close()));
 
+	connect(&ctrlTxt, SIGNAL(textChanged()), SLOT(updateText()));
+
 	cmdNew.setFixedSize (24, 24);
 	cmdNew.setFlat(true);
 	cmdNew.setCursor(Qt::ArrowCursor);
@@ -83,7 +113,7 @@ void Notes::init()
 	cmdClose.setFlat(true);
 	cmdClose.setCursor(Qt::ArrowCursor);
 	cmdClose.setShortcut(Qt::CTRL + Qt::Key_X);
-	txtl.setFrameShape(QFrame::NoFrame);
+	ctrlTxt.setFrameShape(QFrame::NoFrame);
 
 	//setShortcut()
 
@@ -95,12 +125,12 @@ void Notes::init()
 	pbxLayout->addWidget(&cmdNew, 0, 0);
 	pbxLayout->addWidget(&cmdTop, 0, 1);
 	pbxLayout->addWidget(&cmdClose, 0, 3);
-	pbxLayout->addWidget(&txtl, 1, 0, 1, 4);
+	pbxLayout->addWidget(&ctrlTxt, 1, 0, 1, 4);
 	setLayout(pbxLayout);
 
 	//порядок табуляции
 
-	setTabOrder(&txtl, &cmdNew);
+	setTabOrder(&ctrlTxt, &cmdNew);
 	setTabOrder(&cmdNew, &cmdTop);
 	setTabOrder(&cmdTop, &cmdClose);
 
@@ -114,7 +144,7 @@ void Notes::init()
 	brush.setStyle(Qt::SolidPattern);
 	palette.setBrush(QPalette::Active, QPalette::Base, brush);
 	palette.setBrush(QPalette::Inactive, QPalette::Base, brush);
-	txtl.setPalette(palette);
+	ctrlTxt.setPalette(palette);
 
 	QFont font;
 	font.setFamily(QString::fromUtf8("Flow"));
@@ -122,6 +152,15 @@ void Notes::init()
 	font.setPointSize(14);
 	//font.setBold(1);
 	setFont(font);
+
+	ctrlTxt.setText(text);
+
+	if (onTop)
+		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
+	else
+		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+
+	setGeometry(place);
 }
 
 void Notes::mousePressEvent(QMouseEvent* pe)
@@ -143,6 +182,8 @@ void Notes::mouseReleaseEvent(QMouseEvent* pe)
 	isPressed = false;
 
 	position.clear();
+
+	place = geometry();
 
 	//qDebug() << otherWindows;
 	//qDebug() << x() << y() << width() << height();
@@ -196,10 +237,10 @@ void Notes::paintEvent(QPaintEvent *)
 {
 	QPainter painter(this);
 	QLinearGradient gradient (0, 0, width(), height());
-	gradient.setColorAt(0, color1);
-	gradient.setColorAt(1, color2);
+	gradient.setColorAt(0, color);
+	gradient.setColorAt(1, color.darker(110));
 	painter.setBrush(gradient);
-	painter.setPen(QPen(color1, 1, Qt::SolidLine));
+	painter.setPen(QPen(color, 1, Qt::SolidLine));
 	painter.drawRect(rect());
 
 	//В ХР тут чертешто
@@ -249,10 +290,14 @@ void Notes::topForm()
 	show();
 }
 
+void Notes::updateText()
+{
+	text = ctrlTxt.toPlainText();
+}
+
 void Notes::setColorByAction(QAction * act)
 {
-	color1 = colors.find(act->text()).value();
-	color2 = color1.darker(110);
+	color = colors.find(act->text()).value();
 	update();
 }
 
@@ -283,6 +328,7 @@ void Notes::getPos (QPoint inPos, int inWidth)
 	}
 
 	move (a, b);
+	place = geometry();
 }
 
 #ifdef Q_OS_WIN32
@@ -389,6 +435,26 @@ void Notes::getMyWindows()
 		sm.addRect(qApp->desktop()->availableGeometry(i));
 }
 
+QDataStream &operator >>(QDataStream &stream, NotesData &note)
+{
+	stream>>note.text;
+	stream>>note.color;
+	stream>>note.place;
+	stream>>note.onTop;
+
+	return stream;
+}
+
+QDataStream &operator <<(QDataStream &stream, const NotesData &note)
+{
+	stream<<note.text;
+	stream<<note.color;
+	stream<<note.place;
+	stream<<note.onTop;
+
+	return stream;
+}
+
 Medium::Medium(QObject* pobj) : QObject(pobj)
 {
 	notesHide = 0;
@@ -415,32 +481,17 @@ Medium::Medium(QObject* pobj) : QObject(pobj)
 
 void Medium::slotSaveNotes()
 {
-	int notes = 0;
-	QList<QColor> outColor1;
-	QList<QColor> outColor2;
-	QList<QSize> outSize;
-	QList<QPoint> outPos;
-	QList<QString> outText;
-	QList<bool> outTop;
-
-	foreach(Notes *note, allMyNotes)
-	{
-		if (note->txtl.toPlainText() != "")
-		{
-			outColor1<<note->color1;
-			outColor2<<note->color2;
-			outSize<<note->size();
-			outPos<<note->pos();
-			outTop<<note->onTop;
-			outText<<note->txtl.toPlainText();
-			notes++;
-		}
-	}
-
+	QList<NotesData> notesToSave;
 	QFile file("notes.dat");
 	file.open(QIODevice::WriteOnly);
 	QDataStream out(&file);
-	out<<notes<<outColor1<<outColor2<<outSize<<outPos<<outTop<<outText;
+
+	foreach (Notes* note, allMyNotes)
+		if (!note->empty())
+			notesToSave.append(*note);
+
+	out<<notesToSave;
+
 	file.close();
 	trayIcon->hide();
 }
@@ -488,32 +539,26 @@ void Medium::slotTrayAct(QSystemTrayIcon::ActivationReason reason)
 
 void readNotes()
 {
-	int notes = 0;
 	QFile file("notes.dat");
 	if (file.open(QIODevice::ReadOnly))
 	{
 		QDataStream in(&file);
 
-		QList<QColor> inColor1;
-		QList<QColor> inColor2;
-		QList<QSize> inSize;
-		QList<QPoint> inPos;
-		QList<QString> inText;
-		QList<bool> inTop;
+		QList<NotesData> notesToOpen;
+		in >> notesToOpen;
 
-		in>>notes>>inColor1>>inColor2>>inSize>>inPos>>inTop>>inText;
-
-		file.close();
-
-		for (int i = 0; i < notes; i++)
+		foreach (NotesData nData, notesToOpen)
 		{
-			Notes* note = new Notes(inColor1[i], inColor2[i], inPos[i], inSize[i], inText[i], inTop[i]);
+			Notes* note = new Notes(nData);
+			in >> *note;
 			note->show();
 			allMyNotes.insert(note);
 			note->activateWindow();
 		}
+		file.close();
 	}
-	if (notes == 0)
+
+	if (allMyNotes.isEmpty())
 	{
 		Notes* note = new Notes();
 		note->show();
