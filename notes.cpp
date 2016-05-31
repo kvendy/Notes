@@ -19,7 +19,6 @@
 
 QSet<Notes*> allMyNotes;
 
-
 NotesData::NotesData() :
            text(""),
            color(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
@@ -28,20 +27,36 @@ NotesData::NotesData() :
 {
 }
 
-NotesData::NotesData(const NotesData &nData)
-{
-	text  = nData.text;
-	color = nData.color;
-	place = nData.place;
-	onTop = nData.onTop;
-}
-
 NotesData::NotesData(QString inText, QColor inColor, QRect inPlace, bool inTop) :
            text(inText),
            color(inColor),
            place(inPlace),
            onTop(inTop)
 {
+}
+
+QDataStream &operator >>(QDataStream &stream, NotesData &note)
+{
+	stream>>note.text;
+	stream>>note.color;
+	stream>>note.place;
+	stream>>note.onTop;
+	return stream;
+}
+
+QDataStream &operator <<(QDataStream &stream, const NotesData &note)
+{
+	stream<<note.text;
+	stream<<note.color;
+	stream<<note.place;
+	stream<<note.onTop;
+	return stream;
+}
+
+QDataStream &operator <<(QDataStream &stream, NotesData *note)
+{
+	stream<<*note;
+	return stream;
 }
 
 Notes::Notes() :
@@ -173,8 +188,8 @@ void Notes::mousePressEvent(QMouseEvent* pe)
 
 	position = Position(pe->x(), pe->y(), width(), height());
 	sm.clear();
-	//getOSWindows();
-	getMyWindows();
+	getOSWindows();
+	//getMyWindows();
 }
 
 void Notes::mouseReleaseEvent(QMouseEvent* pe)
@@ -429,30 +444,10 @@ void Notes::getMyWindows()
 {
 	foreach(Notes *note, allMyNotes)
 		if (note != this) //может наступить момент, когда он будет сам с собой сверяться. отсекаем на всякий случай
-			sm.addRect(note->x(), note->y(), note->width(), note->height());
+			sm.addRect(note->geometry());
 
 	for (int i = 0; i < qApp->desktop()->numScreens(); i++)
 		sm.addRect(qApp->desktop()->availableGeometry(i));
-}
-
-QDataStream &operator >>(QDataStream &stream, NotesData &note)
-{
-	stream>>note.text;
-	stream>>note.color;
-	stream>>note.place;
-	stream>>note.onTop;
-
-	return stream;
-}
-
-QDataStream &operator <<(QDataStream &stream, const NotesData &note)
-{
-	stream<<note.text;
-	stream<<note.color;
-	stream<<note.place;
-	stream<<note.onTop;
-
-	return stream;
 }
 
 Medium::Medium(QObject* pobj) : QObject(pobj)
@@ -481,16 +476,20 @@ Medium::Medium(QObject* pobj) : QObject(pobj)
 
 void Medium::slotSaveNotes()
 {
-	QList<NotesData> notesToSave;
+	//QList<NotesData> notesToSave;
 	QFile file("notes.dat");
 	file.open(QIODevice::WriteOnly);
 	QDataStream out(&file);
 
-	foreach (Notes* note, allMyNotes)
-		if (!note->empty())
-			notesToSave.append(*note);
+	//foreach (Notes* note, allMyNotes)
+	//	if (!note->empty())
+	//		notesToSave.append(*note);
 
-	out<<notesToSave;
+	for (auto it = allMyNotes.begin(); it != allMyNotes.cend(); ++it)
+		if ((*it)->empty())
+			allMyNotes.erase(it);
+
+	out<<allMyNotes;
 
 	file.close();
 	trayIcon->hide();
@@ -550,7 +549,6 @@ void readNotes()
 		foreach (NotesData nData, notesToOpen)
 		{
 			Notes* note = new Notes(nData);
-			in >> *note;
 			note->show();
 			allMyNotes.insert(note);
 			note->activateWindow();

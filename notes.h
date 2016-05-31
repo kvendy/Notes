@@ -26,7 +26,6 @@ class NotesData
 {
 public:
 	NotesData();
-	NotesData(const NotesData& nData);
 	NotesData(QString inText, QColor inColor, QRect inPlace, bool inTop);
 protected:
 	QString text;
@@ -35,6 +34,7 @@ protected:
 	bool onTop;
 
 	friend QDataStream &operator <<(QDataStream &stream, const NotesData &note);
+	friend QDataStream &operator <<(QDataStream &stream, NotesData *note);
 	friend QDataStream &operator >>(QDataStream &stream, NotesData &note);
 };
 
