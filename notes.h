@@ -22,15 +22,30 @@ class QMenu;
 class QSystemTrayIcon;
 QT_END_NAMESPACE
 
-class SaveContent;
+class NotesData
+{
+public:
+	NotesData();
+	NotesData(QString inText, QColor inColor, QRect inPlace, bool inTop);
+protected:
+	QString text;
+	QColor color;
+	QRect place;
+	bool onTop;
 
-class Notes : public QWidget
+	friend QDataStream &operator <<(QDataStream &stream, const NotesData &note);
+	friend QDataStream &operator <<(QDataStream &stream, NotesData *note);
+	friend QDataStream &operator >>(QDataStream &stream, NotesData &note);
+};
+
+class Notes : public QWidget, public NotesData
 {
 	Q_OBJECT
 private:
 	QPushButton cmdNew;
 	QPushButton cmdTop;
 	QPushButton cmdClose;
+	QTextEdit ctrlTxt;
 	QMenu* pmnu;
 	int mousePressedX, mousePressedY;
 	bool isPressed;
@@ -42,12 +57,11 @@ private:
 	void init();
 public:
 	Notes();
-	Notes(QColor, QColor, QPoint, QSize, QString, bool);
+	Notes(NotesData nData);
+	Notes(QColor, QRect, QString, bool);
 	//~Notes();
+	bool empty();
 	void getPos (QPoint, int);
-	QTextEdit txtl;
-	QColor color1, color2;
-	bool onTop;
 
 #ifdef Q_OS_WIN32
 	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);
@@ -69,6 +83,7 @@ protected:
 public slots:
 	void newForm();
 	void topForm();
+	void updateText();
 	void setColorByAction(QAction*act);
 };
 //------------------------------------------------------------------------------
