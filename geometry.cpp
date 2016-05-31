@@ -3,33 +3,33 @@
 Position::Position(int x, int y, int width, int height)
 {
 	if (y < BORDER)
-		vertical = Vertical::top;
+		vertical_ = Vertical::top;
 	else if (y > height - BORDER)
-		vertical = Vertical::bottom;
+		vertical_ = Vertical::bottom;
 	else
-		vertical = Vertical::none;
+		vertical_ = Vertical::none;
 
 	if (x < CORNER)
-		horizontal = Horizontal::left;
+		horizontal_ = Horizontal::left;
 	else if (x > width - CORNER)
-		horizontal = Horizontal::right;
+		horizontal_ = Horizontal::right;
 	else
-		horizontal = Horizontal::none;
+		horizontal_ = Horizontal::none;
 }
 
 Qt::CursorShape Position::toCursorShape() const
 {
 	Qt::CursorShape shape;
 
-	if ((horizontal == Horizontal::left && vertical == Vertical::top) ||
-	    (horizontal == Horizontal::right && vertical == Vertical::bottom))
+	if ((horizontal_ == Horizontal::left && vertical_ == Vertical::top) ||
+	    (horizontal_ == Horizontal::right && vertical_ == Vertical::bottom))
 		shape = Qt::SizeFDiagCursor;
-	else if ((horizontal == Horizontal::left && vertical == Vertical::bottom) ||
-	         (horizontal == Horizontal::right && vertical == Vertical::top))
+	else if ((horizontal_ == Horizontal::left && vertical_ == Vertical::bottom) ||
+	         (horizontal_ == Horizontal::right && vertical_ == Vertical::top))
 		shape = Qt::SizeBDiagCursor;
-	else if (horizontal == Horizontal::left || horizontal == Horizontal::right)
+	else if (horizontal_ == Horizontal::left || horizontal_ == Horizontal::right)
 		shape = Qt::SizeHorCursor;
-	else if (vertical == Vertical::top || vertical == Vertical::bottom)
+	else if (vertical_ == Vertical::top || vertical_ == Vertical::bottom)
 		shape = Qt::SizeVerCursor;
 	else
 		shape = Qt::ArrowCursor;
@@ -52,7 +52,7 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 	int optimalX = x, optimalY = y, optimalHeight = height, optimalWidth = width,
 	    minimalDistance = SNAP + 1;
 
-	if (!position.right() && !position.left())
+	if (position.vertical() || position.corner())
 	for (auto it = horizontal.lowerBound(y - SNAP); it.key() < horizontal.upperBound(y + height + SNAP).key(); ++it)
 	{
 		if ((it.value().first  < x + width + SNAP) &&
@@ -80,7 +80,7 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 
 	minimalDistance = SNAP + 1;
 
-	if (!position.top() && !position.bottom())
+	if (position.horizontal() || position.corner())
 	for (auto it = vertical.lowerBound(x - SNAP); it.key() < vertical.upperBound(x + width + SNAP).key(); ++it)
 	{
 		if ((it.value().first < y + height + SNAP) &&

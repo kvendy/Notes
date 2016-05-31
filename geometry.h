@@ -31,8 +31,8 @@ class Position
 {
 public:
 	Position() :
-	    horizontal  (Horizontal::none),
-	    vertical    (Vertical::none)
+	    horizontal_  (Horizontal::none),
+	    vertical_    (Vertical::none)
 	{
 	}
 
@@ -42,30 +42,42 @@ public:
 
 	void clear()
 	{
-		horizontal = Horizontal::none;
-		vertical   = Vertical::none;
+		horizontal_ = Horizontal::none;
+		vertical_   = Vertical::none;
 	}
 
 	bool left() const
 	{
-		return horizontal == Horizontal::left;
+		return horizontal_ == Horizontal::left;
 	}
 	bool right() const
 	{
-		return horizontal == Horizontal::right;
+		return horizontal_ == Horizontal::right;
 	}
 	bool top() const
 	{
-		return vertical == Vertical::top;
+		return vertical_ == Vertical::top;
 	}
 	bool bottom() const
 	{
-		return vertical == Vertical::bottom;
+		return vertical_ == Vertical::bottom;
+	}
+	bool corner() const
+	{
+		return vertical_ != Vertical::none && horizontal_ != Horizontal::none;
+	}
+	bool vertical() const
+	{
+		return vertical_ != Vertical::none && horizontal_ == Horizontal::none;
+	}
+	bool horizontal() const
+	{
+		return vertical_ == Vertical::none && horizontal_ != Horizontal::none;
 	}
 
 private:
-	Horizontal horizontal;
-	Vertical vertical;
+	Horizontal horizontal_;
+	Vertical vertical_;
 };
 
 class SnapManager

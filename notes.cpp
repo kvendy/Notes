@@ -190,6 +190,12 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 
 		sm.snap(newX, newY, newWidth, newHeight, position);
 
+		if (newWidth < MINIMAL_WIDTH)
+			return;
+
+		if (newHeight < MINIMAL_HEIGHT)
+			return;
+
 		setGeometry(newX, newY, newWidth, newHeight);
 	}
 }
