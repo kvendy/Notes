@@ -52,7 +52,7 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 	int optimalX = x, optimalY = y, optimalHeight = height, optimalWidth = width,
 	    minimalDistance = SNAP + 1;
 
-	if (position.vertical() || position.corner())
+	if (position.vertical() || position.corner() || position.moving())
 	for (auto it = horizontal.lowerBound(y - SNAP); it.key() < horizontal.upperBound(y + height + SNAP).key(); ++it)
 	{
 		if ((it.value().first  < x + width + SNAP) &&
@@ -80,7 +80,7 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 
 	minimalDistance = SNAP + 1;
 
-	if (position.horizontal() || position.corner())
+	if (position.horizontal() || position.corner() || position.moving())
 	for (auto it = vertical.lowerBound(x - SNAP); it.key() < vertical.upperBound(x + width + SNAP).key(); ++it)
 	{
 		if ((it.value().first < y + height + SNAP) &&
