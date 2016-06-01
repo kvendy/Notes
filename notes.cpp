@@ -5,16 +5,18 @@
 #include "notes.h"
 
 /*
- Короче обнаруженные проблемы:
- 1) Окна накладываются, если:
-	а. сделать три окна,
-	б. закрыть среднее
-	в. создавать окна от первого
- 2) Не работает хоткей закрытия окна вообще и хоткей вывода в топ после первого использования
- 3) Часто теряется фокус по закытию одного из окон; пропадает фокус при создании нвых окон хоткеем.
-	Нужно следить за фокусом вручную короче.
-------------------------------------------------------------------------------------------------------
- 4) Ни в одной реализации липких окон нет проверки по внутренним границам. Убрать?
+ Problems:
+ 1) Note windows overlaps if:
+	a. create three notes,
+	b. close note in the middle
+	c. continue creating notes from the first
+ 2) Hotkeys do not work:
+	a. close note - never
+	b. put window to the top - after the firs use
+ 3) Notes lose focus often after closing or creating one with hotkey.
+ Todo:
+ 1) Filter windows somehow, both in windows and linux
+ 2) Analize windows Z order and snap only to visible windows
 */
 
 QSet<Notes*> allMyNotes;
@@ -79,7 +81,7 @@ Notes::Notes(NotesData nData) :
 	init();
 }
 
-Notes::Notes(QColor inColor, QRect inPlace, QString inText, bool inTop) :
+Notes::Notes(QString inText, QColor inColor, QRect inPlace, bool inTop) :
     QWidget(0),
     NotesData(inText, inColor, inPlace, inTop),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
@@ -89,7 +91,7 @@ Notes::Notes(QColor inColor, QRect inPlace, QString inText, bool inTop) :
 	init();
 }
 
-bool Notes::empty()
+bool Notes::isEmpty()
 {
 	return ctrlTxt.toPlainText().isEmpty();
 }
@@ -132,7 +134,7 @@ void Notes::init()
 
 	//setShortcut()
 
-	//расположение элементов
+	//placing controls
 
 	QGridLayout* pbxLayout = new QGridLayout(this);
 	pbxLayout->setMargin(2);
@@ -143,7 +145,7 @@ void Notes::init()
 	pbxLayout->addWidget(&ctrlTxt, 1, 0, 1, 4);
 	setLayout(pbxLayout);
 
-	//порядок табуляции
+	//tab order
 
 	setTabOrder(&ctrlTxt, &cmdNew);
 	setTabOrder(&cmdNew, &cmdTop);
@@ -152,7 +154,7 @@ void Notes::init()
 	setAttribute(Qt::WA_DeleteOnClose);
 	setMouseTracking(true);
 
-	//прозрачный фон области редактирования текста
+	//transparent background for tex edit control
 
 	QPalette palette;
 	QBrush brush(QColor(0, 0, 0, 0));
@@ -195,13 +197,8 @@ void Notes::mousePressEvent(QMouseEvent* pe)
 void Notes::mouseReleaseEvent(QMouseEvent* pe)
 {
 	isPressed = false;
-
 	position.clear();
-
 	place = geometry();
-
-	//qDebug() << otherWindows;
-	//qDebug() << x() << y() << width() << height();
 }
 
 void Notes::mouseMoveEvent(QMouseEvent* pe)
@@ -213,7 +210,7 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 	{
 		int newX = x(), newY = y(), newWidth = width(), newHeight = height();
 
-		//считаем новый Rect
+		//calculating new rect
 		if (position.left())
 		{
 			newWidth = newWidth - pe->globalX() + newX;
@@ -258,7 +255,7 @@ void Notes::paintEvent(QPaintEvent *)
 	painter.setPen(QPen(color, 1, Qt::SolidLine));
 	painter.drawRect(rect());
 
-	//В ХР тут чертешто
+	//Goes horribly wrong on winXP
 	//QStyleOptionSizeGrip opt;
 	//opt.init(this);
 	//opt.corner = Qt::BottomRightCorner;
@@ -443,7 +440,7 @@ void Notes::getOSWindows()
 void Notes::getMyWindows()
 {
 	foreach(Notes *note, allMyNotes)
-		if (note != this) //может наступить момент, когда он будет сам с собой сверяться. отсекаем на всякий случай
+		if (note != this)
 			sm.addRect(note->geometry());
 
 	for (int i = 0; i < qApp->desktop()->numScreens(); i++)
@@ -482,7 +479,7 @@ void Medium::slotSaveNotes()
 
 	auto it = allMyNotes.begin();
 	while (it != allMyNotes.end())
-		if ((*it)->empty())
+		if ((*it)->isEmpty())
 			it = allMyNotes.erase(it);
 		else
 			++it;
@@ -517,7 +514,6 @@ void Medium::slotTrayAct(QSystemTrayIcon::ActivationReason reason)
 	foreach(Notes *note, allMyNotes)
 		note->activateWindow();
 	/*
-	тут прописано разное поведение для разных событий - ненужно пока
 
 	switch (reason)
 	{

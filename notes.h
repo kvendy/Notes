@@ -58,9 +58,9 @@ private:
 public:
 	Notes();
 	Notes(NotesData nData);
-	Notes(QColor, QRect, QString, bool);
+	Notes(QString inText, QColor inColor, QRect inPlace, bool inTop);
 	//~Notes();
-	bool empty();
+	bool isEmpty();
 	void getPos (QPoint, int);
 
 #ifdef Q_OS_WIN32
