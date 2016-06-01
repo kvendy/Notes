@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/"/>
+    <qresource prefix="/images">
+        <file>notes.png</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>Flow.otf</file>
+        <file>Flow_B.otf</file>
+    </qresource>
+</RCC>
