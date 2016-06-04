@@ -55,13 +55,12 @@ private:
 	QList<QString> otherWindowsNames;
 	QMap<QString, QColor> colors;
 	void init();
+	void adjustMyRect();
 public:
 	Notes();
 	Notes(NotesData nData);
 	Notes(QString inText, QColor inColor, QRect inPlace, bool inTop);
-	//~Notes();
 	bool isEmpty();
-	void getPos (QPoint, int);
 
 #ifdef Q_OS_WIN32
 	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);

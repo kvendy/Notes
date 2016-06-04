@@ -55,8 +55,8 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 	if (position.vertical() || position.corner() || position.moving())
 	for (auto it = horizontal.lowerBound(y - SNAP); it.key() < horizontal.upperBound(y + height + SNAP).key(); ++it)
 	{
-		if ((it.value().first  < x + width + SNAP) &&
-		    (it.value().second > x - SNAP))
+		if ((it.value().first - SNAP < x + width) &&
+			(it.value().second + SNAP > x))
 		{
 			if ((abs(y - it.key()) < minimalDistance) && !position.bottom())
 			{
@@ -83,8 +83,8 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 	if (position.horizontal() || position.corner() || position.moving())
 	for (auto it = vertical.lowerBound(x - SNAP); it.key() < vertical.upperBound(x + width + SNAP).key(); ++it)
 	{
-		if ((it.value().first < y + height + SNAP) &&
-		    (it.value().second > y - SNAP))
+		if ((it.value().first - SNAP < y + height) &&
+			(it.value().second + SNAP > y))
 		{
 			if ((abs(x - it.key()) < minimalDistance) && !position.right())
 			{
@@ -129,4 +129,48 @@ void SnapManager::addRect(int x, int y, int width, int height)
 
 	vertical.insert(x + width,  {y, y + height});
 	vertical.insert(x,          {y, y + height});
+}
+
+bool SnapManager::overlapCheck(const QRect &rect)
+{
+	Position hPos = Position(Horizontal::left, Vertical::none);
+	Position vPos = Position(Horizontal::none, Vertical::top);
+
+	if (checkLine(rect.x(), rect.y(), rect.y() + rect.height(), vPos, true) &&
+		checkLine(rect.y(), rect.x(), rect.x() + rect.width(),  hPos, true) &&
+		checkLine(rect.x() + rect.width(),  rect.y(), rect.y() + rect.height(), vPos, true) &&
+		checkLine(rect.y() + rect.height(), rect.x(), rect.x() + rect.width(), hPos, true))
+		return true;
+
+	return false;
+}
+
+bool SnapManager::checkLine(int a, int b1, int b2, const Position &position, bool exact)
+{
+	bool result = false;
+
+	Line *lineSet;
+
+	if (position.horizontal())
+		lineSet = &horizontal;
+	else if (position.vertical())
+		lineSet = &vertical;
+
+	for (auto it = lineSet->lowerBound(a - SNAP); it.key() < lineSet->upperBound(a + SNAP).key(); ++it)
+	{
+		if ((it.value().first - SNAP < b2) &&
+			(it.value().second + SNAP > b1))
+		{
+			if (exact)
+			{
+				if ((it.value().first + SNAP > b1) &&
+					(it.value().second - SNAP < b2))
+					result = true;
+			}
+			else
+				result = true;
+		}
+	}
+
+	return result;
 }

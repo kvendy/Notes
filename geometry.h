@@ -5,6 +5,8 @@
 #include <QRect>
 #include <QMultiMap>
 
+const int DEFAULT_WIDTH  = 180;
+const int DEFAULT_HEIGHT = 165;
 const int MINIMAL_WIDTH  = 100;
 const int MINIMAL_HEIGHT = 100;
 const int BORDER = 3;
@@ -33,6 +35,12 @@ public:
 	Position() :
 	    horizontal_  (Horizontal::none),
 	    vertical_    (Vertical::none)
+	{
+	}
+
+	Position(Horizontal horizontal, Vertical vertical) :
+		horizontal_  (horizontal),
+		vertical_    (vertical)
 	{
 	}
 
@@ -92,10 +100,10 @@ public:
 	void clear();
 	void addRect(const QRect& rect);
 	void addRect(int x, int y, int width, int height);
+	bool overlapCheck(const QRect& rect);
 private:
+	bool checkLine(int a, int b1, int b2, const Position &position, bool exact);
 	Line horizontal, vertical;
 };
-
-
 
 #endif // GEOMETRY_H

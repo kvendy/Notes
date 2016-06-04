@@ -4,7 +4,6 @@
         <file>notes.png</file>
     </qresource>
     <qresource prefix="/fonts">
-        <file>Flow.otf</file>
-        <file>Flow_B.otf</file>
+        <file>BadScript.ttf</file>
     </qresource>
 </RCC>

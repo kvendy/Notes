@@ -6,14 +6,10 @@
 
 /*
  Problems:
- 1) Note windows overlaps if:
-	a. create three notes,
-	b. close note in the middle
-	c. continue creating notes from the first
- 2) Hotkeys do not work:
+ 1) Hotkeys do not work:
 	a. close note - never
 	b. put window to the top - after the firs use
- 3) Notes lose focus often after closing or creating one with hotkey.
+ 2) Notes lose focus often after closing or creating one with hotkey.
  Todo:
  1) Filter windows somehow, both in windows and linux
  2) Analize windows Z order and snap only to visible windows
@@ -21,10 +17,35 @@
 
 QSet<Notes*> allMyNotes;
 
+QWidget *globalParent = nullptr;
+
+QColor randomColor()
+{
+	return QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 96);
+}
+
+QRect centerPosition(int width = DEFAULT_WIDTH, int height = DEFAULT_HEIGHT)
+{
+	QPoint screenCenter = QGuiApplication::primaryScreen()->availableGeometry().center();
+
+	return QRect(screenCenter.x() - width / 2,
+	             screenCenter.x() - height / 2,
+	             width, height);
+}
+
+QRect randomPosition(int width = DEFAULT_WIDTH, int height = DEFAULT_HEIGHT)
+{
+	QSize screenSize = QGuiApplication::primaryScreen()->availableGeometry().size();
+
+	return QRect(rand()%(screenSize.width()  - width  * 3) + width,
+	             rand()%(screenSize.height() - height * 3) + height,
+	             width, height);
+}
+
 NotesData::NotesData() :
            text(""),
-           color(QColor::fromHsl(rand() % 359, 64 + rand() % 64, 128 + rand() % 128)),
-           place(QRect(300, 300, 180, 165)),
+           color(randomColor()),
+           place(randomPosition()),
            onTop(false)
 {
 }
@@ -62,7 +83,7 @@ QDataStream &operator <<(QDataStream &stream, NotesData *note)
 }
 
 Notes::Notes() :
-    QWidget(0),
+    QWidget(globalParent, Qt::Window),
     NotesData(),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
@@ -72,7 +93,7 @@ Notes::Notes() :
 }
 
 Notes::Notes(NotesData nData) :
-    QWidget(0),
+    QWidget(globalParent, Qt::Window),
     NotesData(nData),
     cmdNew("+"), cmdTop("^"), cmdClose("x"),
     mousePressedX(0), mousePressedY(0),
@@ -82,7 +103,7 @@ Notes::Notes(NotesData nData) :
 }
 
 Notes::Notes(QString inText, QColor inColor, QRect inPlace, bool inTop) :
-    QWidget(0),
+    QWidget(globalParent, Qt::Window),
     NotesData(inText, inColor, inPlace, inTop),
 	cmdNew("+"), cmdTop("^"), cmdClose("x"),
 	mousePressedX(0), mousePressedY(0),
@@ -164,20 +185,38 @@ void Notes::init()
 	ctrlTxt.setPalette(palette);
 
 	QFont font;
-	font.setFamily(QString::fromUtf8("Flow"));
-	//font.setFamily(QString::fromUtf8("Segoe Script"));
+	font.setFamily("Bad Script");
+	//font.setFamily("Segoe Script");
 	font.setPointSize(14);
 	//font.setBold(1);
-	setFont(font);
+	ctrlTxt.setFont(font);
 
 	ctrlTxt.setText(text);
 
 	if (onTop)
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
+		setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
 	else
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+		setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+
+	adjustMyRect();
 
 	setGeometry(place);
+}
+
+void Notes::adjustMyRect()
+{
+	sm.clear();
+	getMyWindows();
+
+	while (sm.overlapCheck(place))
+	{
+		place.translate(place.width() + SNAP * 2, 0);
+
+		if (place.x() + place.width() > qApp->desktop()->availableGeometry(this).right())
+			place.translate(SNAP * 2 - 4 * place.width(), place.height() / 2);
+		if (place.y() + place.height() > qApp->desktop()->availableGeometry(this).height())
+			place = randomPosition(place.width(), place.height());
+	}
 }
 
 void Notes::mousePressEvent(QMouseEvent* pe)
@@ -275,30 +314,29 @@ void Notes::closeEvent(QCloseEvent *event)
 
 void Notes::newForm()
 {
-	Notes* note = new Notes();
+	Notes* note = new Notes("", randomColor(), geometry(), false);
 	note->show();
 	allMyNotes.insert(note);
-	note->getPos(pos(), width());
 }
 
 void Notes::topForm()
 {
-	int widthChangeTop = width();
-	int heightChangeTop = height();
+	//int widthChangeTop = width();
+	//int heightChangeTop = height();
 	hide();
 	if (onTop)
 	{
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+		setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
 		onTop = false;
 		cmdTop.setText("^");
 	}
 	else
 	{
-		setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
+		setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
 		onTop = true;
 		cmdTop.setText("v");
 	}
-	resize(widthChangeTop, heightChangeTop);
+	//resize(widthChangeTop, heightChangeTop);
 	show();
 }
 
@@ -311,36 +349,6 @@ void Notes::setColorByAction(QAction * act)
 {
 	color = colors.find(act->text()).value();
 	update();
-}
-
-void Notes::getPos (QPoint inPos, int inWidth)
-{
-	int a = inPos.x() + inWidth + 10;
-	int b = inPos.y();
-
-	foreach (Notes *note, allMyNotes)
-	{
-		if (note->pos() == QPoint(a, b))
-			a += note->width() + 10;
-
-		//if (abs(note->pos().y() - b) < 20)
-			//if (abs(note->pos().x() - a) < 20)
-				//a += note->width() + 10;
-
-		if (a + width() > qApp->desktop()->availableGeometry(this).right())
-		{
-			a -= 4 * width() - 20;
-			b += 20;
-		}
-		if (b + height() > qApp->desktop()->availableGeometry(this).height())
-		{
-			a += 20;
-			b -= height() - 20;
-		}
-	}
-
-	move (a, b);
-	place = geometry();
 }
 
 #ifdef Q_OS_WIN32
@@ -407,8 +415,11 @@ void Notes::enumerateWindows(Display *display, Window rootWindow)
 									  win_attr.x, win_attr.y, &screen_x, &screen_y,
 									  &window);
 
-				//otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
-				sm.addRect(screen_x, screen_y, win_attr.width, win_attr.height);
+				if (win_attr.width != 0 && win_attr.height != 0 &&
+					(screen_x != this->x() || screen_y != this->y() ||
+					 win_attr.width != this->width() || win_attr.height != this->height()))
+					//otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
+					sm.addRect(screen_x, screen_y, win_attr.width, win_attr.height);
 			}
 
 			XFree(name);
@@ -504,7 +515,6 @@ void Medium::slotHideNotes()
 void Medium::slotNewNote()
 {
 	Notes* note = new Notes();
-	note->getPos(QPoint(rand()%100 + 100, rand()%100 + 100), 0);
 	note->show();
 	allMyNotes.insert(note);
 }
@@ -563,9 +573,12 @@ int main(int argc, char** argv)
 {
 	srand(time(NULL));
 	QApplication app(argc, argv);
+	app.setQuitOnLastWindowClosed(false);
 
-	QFontDatabase::addApplicationFont (":/fonts/Flow.otf");
-	QFontDatabase::addApplicationFont (":/fonts/Flow_B.otf");
+	QFontDatabase::addApplicationFont (":/fonts/BadScript.ttf");
+
+	QWidget window;
+	globalParent = &window;
 
 	Medium medium;
 	readNotes();
