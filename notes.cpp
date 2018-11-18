@@ -143,6 +143,21 @@ void Notes::init()
 
 	connect(&ctrlTxt, SIGNAL(textChanged()), SLOT(updateText()));
 
+	QShortcut* shortcutB = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_B), &ctrlTxt);
+	connect(shortcutB, SIGNAL(activated()), this, SLOT(makeBold()));
+
+	QShortcut* shortcutI = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_I), &ctrlTxt);
+	connect(shortcutI, SIGNAL(activated()), this, SLOT(makeItalic()));
+
+	QShortcut* shortcutS = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), &ctrlTxt);
+	connect(shortcutS, SIGNAL(activated()), this, SLOT(makeStrike()));
+
+	QShortcut* shortcutU = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_U), &ctrlTxt);
+	connect(shortcutU, SIGNAL(activated()), this, SLOT(makeUnderline()));
+
+	QShortcut* shortcutP = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_P), &ctrlTxt);
+	connect(shortcutP, SIGNAL(activated()), this, SLOT(makePlain()));
+
 	cmdNew.setFixedSize (24, 24);
 	cmdNew.setFlat(true);
 	cmdNew.setCursor(Qt::ArrowCursor);
@@ -344,9 +359,64 @@ void Notes::topForm()
 	show();
 }
 
+void Notes::makeBold()
+{
+	if (ctrlTxt.textCursor().hasSelection())
+	{
+		QTextCharFormat format;
+		int newFormat,
+		    oldFormat = ctrlTxt.textCursor().charFormat().fontWeight();
+		if (oldFormat < QFont::Bold)
+			newFormat = QFont::Bold;
+		else
+			newFormat = QFont::Normal;
+		format.setFontWeight(newFormat);
+		ctrlTxt.textCursor().mergeCharFormat(format);
+	}
+}
+
+void Notes::makeItalic()
+{
+	if (ctrlTxt.textCursor().hasSelection())
+	{
+		QTextCharFormat format;
+		format.setFontItalic(!ctrlTxt.textCursor().charFormat().fontItalic());
+		ctrlTxt.textCursor().mergeCharFormat(format);
+	}
+}
+
+void Notes::makePlain()
+{
+	if (ctrlTxt.textCursor().hasSelection())
+	{
+		ctrlTxt.textCursor().setCharFormat(QTextCharFormat());
+		ctrlTxt.textCursor().setBlockFormat(QTextBlockFormat());
+	}
+}
+
+void Notes::makeUnderline()
+{
+	if (ctrlTxt.textCursor().hasSelection())
+	{
+		QTextCharFormat format;
+		format.setFontUnderline(!ctrlTxt.textCursor().charFormat().fontUnderline());
+		ctrlTxt.textCursor().mergeCharFormat(format);
+	}
+}
+
+void Notes::makeStrike()
+{
+	if (ctrlTxt.textCursor().hasSelection())
+	{
+		QTextCharFormat format;
+		format.setFontStrikeOut(!ctrlTxt.textCursor().charFormat().fontStrikeOut());
+		ctrlTxt.textCursor().mergeCharFormat(format);
+	}
+}
+
 void Notes::updateText()
 {
-	text = ctrlTxt.toPlainText();
+	text = ctrlTxt.toHtml();
 }
 
 void Notes::setColorByAction(QAction * act)

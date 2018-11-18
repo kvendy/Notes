@@ -83,6 +83,11 @@ protected:
 public slots:
 	void newForm();
 	void topForm();
+	void makeBold();
+	void makeItalic();
+	void makePlain();
+	void makeUnderline();
+	void makeStrike();
 	void updateText();
 	void setColorByAction(QAction*act);
 };
