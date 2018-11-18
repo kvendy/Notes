@@ -112,6 +112,10 @@ Notes::Notes(QString inText, QColor inColor, QRect inPlace, bool inTop) :
 	init();
 }
 
+Notes::~Notes()
+{
+}
+
 bool Notes::isEmpty()
 {
 	return ctrlTxt.toPlainText().isEmpty();
@@ -480,6 +484,10 @@ Medium::Medium(QObject* pobj) : QObject(pobj)
 
 	connect(qApp, SIGNAL(aboutToQuit()), SLOT(slotSaveNotes()));
 	connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(slotTrayAct(QSystemTrayIcon::ActivationReason)));
+}
+
+Medium::~Medium()
+{
 }
 
 void Medium::slotSaveNotes()

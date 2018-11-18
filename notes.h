@@ -8,7 +8,7 @@
 #include <QTextEdit>
 
 #ifdef Q_OS_WIN32
-#include <windows.h>
+#include <Windows.h>
 #elif defined(Q_OS_LINUX)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -60,6 +60,7 @@ public:
 	Notes();
 	Notes(NotesData nData);
 	Notes(QString inText, QColor inColor, QRect inPlace, bool inTop);
+	virtual ~Notes();
 	bool isEmpty();
 
 #ifdef Q_OS_WIN32
@@ -91,7 +92,8 @@ class Medium : public QObject
 {
 	Q_OBJECT
 public:
-	Medium(QObject* pobj = 0);
+	Medium(QObject* pobj = nullptr);
+	virtual ~Medium();
 	QMenu* pmnu;
 	QSystemTrayIcon *trayIcon;
 private:
