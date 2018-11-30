@@ -66,6 +66,9 @@ public:
 #ifdef Q_OS_WIN32
 	static BOOL CALLBACK StaticEnumWindowsProc(HWND hwnd, LPARAM lParam);
 	BOOL EnumWindowsProc(HWND hwnd);
+	bool win10;
+	int xborder;
+	int yborder;
 #elif defined(Q_OS_LINUX)
 	void enumerateWindows(Display *display, Window rootWindow);
 #endif

@@ -1,5 +1,6 @@
 #include <QtGui>
 #include <QtWidgets>
+#include <QSysInfo>
 #include <time.h>
 #include <math.h>
 #include "notes.h"
@@ -219,6 +220,20 @@ void Notes::init()
 	adjustMyRect();
 
 	setGeometry(place);
+
+#ifdef Q_OS_WIN32
+	win10 = QSysInfo::WindowsVersion >= QSysInfo::WV_WINDOWS10;
+	if (win10)
+	{
+		xborder = ::GetSystemMetrics(SM_CXPADDEDBORDER) + ::GetSystemMetrics(SM_CXFRAME);
+		yborder = ::GetSystemMetrics(SM_CXPADDEDBORDER) + ::GetSystemMetrics(SM_CYFRAME);
+	}
+	else
+	{
+		xborder = 0;
+		yborder = 0;
+	}
+#endif
 }
 
 void Notes::adjustMyRect()
@@ -445,7 +460,19 @@ BOOL Notes::EnumWindowsProc(HWND hwnd)
 		if (width != 0 && height != 0 &&
 		    (x != this->x() || y != this->y() || width != this->width() || height != this->height()))
 		{
-			if(GetWindowText(hwnd, title, 255))
+			if (win10)
+			{
+				LONG lStyle = ::GetWindowLong(hwnd, GWL_STYLE);
+
+				if (lStyle & WS_THICKFRAME)
+				{
+					x += xborder;
+					width -= xborder * 2;
+					height -= yborder;
+				}
+			}
+
+			if(::GetWindowText(hwnd, title, 255))
 				otherWindowsNames.append(QString::fromWCharArray(title));
 			else
 				otherWindowsNames.append("");
