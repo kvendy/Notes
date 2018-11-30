@@ -317,6 +317,22 @@ void Notes::mouseMoveEvent(QMouseEvent* pe)
 	}
 }
 
+void Notes::keyPressEvent(QKeyEvent * event)
+{
+	if (event->modifiers() == Qt::ControlModifier)
+	{
+		if (event->key() == Qt::Key_Tab)
+		{
+			auto it = allMyNotes.find(this);
+			it++;
+			if (it == allMyNotes.end())
+				it = allMyNotes.begin();
+
+			(*it)->activateWindow();
+		}
+	}
+}
+
 void Notes::paintEvent(QPaintEvent *)
 {
 	QPainter painter(this);

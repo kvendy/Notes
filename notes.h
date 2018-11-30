@@ -81,6 +81,7 @@ protected:
 	virtual void mousePressEvent (QMouseEvent*);
 	virtual void mouseReleaseEvent (QMouseEvent*);
 	virtual void mouseMoveEvent (QMouseEvent*);
+	virtual void keyPressEvent(QKeyEvent *event);
 	virtual void contextMenuEvent (QContextMenuEvent*);
 	virtual void closeEvent(QCloseEvent *event);
 public slots:
