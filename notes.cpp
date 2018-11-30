@@ -11,8 +11,7 @@
 	b. put window to the top - after the firs use
  2) Notes lose focus often after closing or creating one with hotkey.
  Todo:
- 1) Filter windows somehow, both in windows and linux
- 2) Analize windows Z order and snap only to visible windows
+ 1) Filter some other windows
 */
 
 QSet<Notes*> allMyNotes;

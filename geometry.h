@@ -3,6 +3,7 @@
 
 #include <qnamespace.h>
 #include <QRect>
+#include <QVector>
 #include <QMultiMap>
 
 const int DEFAULT_WIDTH  = 180;
@@ -102,8 +103,16 @@ public:
 	void addRect(int x, int y, int width, int height);
 	bool overlapCheck(const QRect& rect);
 private:
+	Line checkLineToInsert(int rect_top,
+	                       int rect_bottom,
+	                       int rect_left,
+	                       int rect_right,
+	                       int base_line,
+	                       int base_left,
+	                       int base_right);
 	bool checkLine(int a, int b1, int b2, const Position &position, bool exact);
 	Line horizontal, vertical;
+	QVector<QRect> windows;
 };
 
 #endif // GEOMETRY_H

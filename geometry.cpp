@@ -113,6 +113,7 @@ void SnapManager::snap(int &x, int &y, int &width, int &height, const Position &
 
 void SnapManager::clear()
 {
+	windows.clear();
 	horizontal.clear();
 	vertical.clear();
 }
@@ -124,11 +125,39 @@ void SnapManager::addRect(const QRect &rect)
 
 void SnapManager::addRect(int x, int y, int width, int height)
 {
-	horizontal.insert(y,           {x, x + width});
-	horizontal.insert(y  + height, {x, x + width});
+	Line newHorizontal, newVertical;
 
-	vertical.insert(x + width,  {y, y + height});
-	vertical.insert(x,          {y, y + height});
+	newHorizontal.insert(y,           {x, x + width});
+	newHorizontal.insert(y  + height, {x, x + width});
+
+	newVertical.insert(x + width,  {y, y + height});
+	newVertical.insert(x,          {y, y + height});
+
+	//check existing windows
+	foreach (QRect window, windows)
+	{
+		Line newHLine;
+
+		for (auto it = newHorizontal.begin(); it != newHorizontal.end(); ++it)
+		{
+			newHLine.unite(checkLineToInsert(window.top(), window.bottom(), window.left(), window.right(), it.key(), it.value().first, it.value().second));
+		}
+
+		newHorizontal = newHLine;
+
+		Line newVLine;
+		for (auto it = newVertical.begin(); it != newVertical.end(); ++it)
+		{
+			newVLine.unite(checkLineToInsert(window.top(), window.bottom(), window.left(), window.right(), it.key(), it.value().first, it.value().second));
+		}
+
+		newVertical = newVLine;
+	}
+
+	horizontal.unite(newHorizontal);
+	vertical.unite(newVertical);
+
+	windows.append(QRect(x, y, width, height));
 }
 
 bool SnapManager::overlapCheck(const QRect &rect)
@@ -143,6 +172,39 @@ bool SnapManager::overlapCheck(const QRect &rect)
 		return true;
 
 	return false;
+}
+
+Line SnapManager::checkLineToInsert(int rect_top, int rect_bottom, int rect_left, int rect_right, int base_line, int base_left, int base_right)
+{
+	Line line;
+
+	if (rect_top < base_line && rect_bottom > base_line)
+	{
+		if(rect_left < base_left)
+		{
+			if (rect_right < base_left) //full line
+				line.insert(base_line, {base_left, base_right});
+			else if (rect_right < base_right) //crop
+				line.insert(base_line, {rect_right, base_right});
+			// else //no line
+		}
+		else
+		{
+			if (rect_left > base_right) //full line
+				line.insert(base_line, {base_left, base_right});
+			else if (rect_right > base_right) //crop
+				line.insert(base_line, {base_left, rect_left});
+			else //two lines
+			{
+				line.insert(base_line, {base_left, rect_left});
+				line.insert(base_line, {rect_right, base_right});
+			}
+		}
+	}
+	else //full line
+		line.insert(base_line, {base_left, base_right});
+
+	return line;
 }
 
 bool SnapManager::checkLine(int a, int b1, int b2, const Position &position, bool exact)
