@@ -464,8 +464,10 @@ BOOL Notes::StaticEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 BOOL Notes::EnumWindowsProc(HWND hwnd)
 {
+	//TODO ignore special invisible windows
+
 	RECT rect;
-	WCHAR title[255];
+	WCHAR title[256];
 	if(::GetWindowRect(hwnd, &rect) && ::IsWindowVisible(hwnd))
 	{
 		int x      = rect.left,
@@ -534,8 +536,8 @@ void Notes::enumerateWindows(Display *display, Window rootWindow)
 				if (win_attr.width != 0 && win_attr.height != 0 &&
 					(screen_x != this->x() || screen_y != this->y() ||
 					 win_attr.width != this->width() || win_attr.height != this->height()))
-					//otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
-					sm.addRect(screen_x, screen_y, win_attr.width, win_attr.height);
+					otherWindows.append(QRect(screen_x, screen_y, win_attr.width, win_attr.height));
+				    //sm.addRect(screen_x, screen_y, win_attr.width, win_attr.height);
 			}
 
 			XFree(name);
@@ -549,6 +551,7 @@ void Notes::enumerateWindows(Display *display, Window rootWindow)
 
 void Notes::getOSWindows()
 {
+	sm.clear();
 	otherWindows.clear();
 	otherWindowsNames.clear();
 
@@ -558,6 +561,8 @@ void Notes::getOSWindows()
 	Display *display = XOpenDisplay(":0.0");
 	Window rootWindow = XDefaultRootWindow(display);
 	enumerateWindows(display, rootWindow);
+	for (int i = otherWindows.size() - 1; i >= 0; i--)
+		sm.addRect(otherWindows[i]);
 #endif
 
 	//for (int i = 0; i < otherWindowsNames.size() && i < otherWindows.size(); i++)
